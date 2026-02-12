@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matthews Servicing Fee Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2a5a8c;
+    --accent: #2e86de;
+    --accent-light: #54a0ff;
+    --success: #10ac84;
+    --warning: #f0932b;
+    --danger: #ee5a24;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #2d3436;
+    --text-light: #636e72;
+    --border: #dfe6e9;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 20px 32px;
+    box-shadow: var(--shadow-lg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: 22px; font-weight: 600; }
+  header p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* Tab Navigation */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--card);
+    padding: 6px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-light);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { background: var(--bg); color: var(--text); }
+  .tab-btn.active { background: var(--accent); color: white; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--bg);
+  }
+  .card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 16px 0 8px;
+  }
+
+  /* Forms */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .form-group select,
+  .form-group input {
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text);
+    background: white;
+    transition: border-color 0.2s;
+  }
+  .form-group select:focus,
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(46,134,222,0.1);
+  }
+  .form-group .hint {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { opacity: 0.9; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { opacity: 0.9; }
+  .btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+  }
+  .btn-outline:hover { background: var(--accent); color: white; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* Results */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .result-box {
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+  }
+  .result-box .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+  }
+  .result-box .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 4px;
+  }
+  .result-box .sub {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+  .result-box.highlight { background: linear-gradient(135deg, #e8f4fd, #d6eaf8); }
+  .result-box.highlight .value { color: var(--accent); }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: 12px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--bg);
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+  }
+  th:first-child, td:first-child { text-align: left; }
+  tr:hover td { background: #f8f9fa; }
+
+  /* Lender info */
+  .lender-info {
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 16px;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .lender-info .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .tag-agency { background: #dfe6fd; color: #3742a0; }
+  .tag-dus { background: #d5f5e3; color: #1e8449; }
+  .tag-insurance { background: #fdebd0; color: #b9770e; }
+  .lender-info dl { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin-top: 8px; }
+  .lender-info dt { font-weight: 600; color: var(--text-light); }
+  .lender-info dd { color: var(--text); }
+
+  /* Fee tier table */
+  .tier-table { margin: 8px 0; }
+  .tier-table th { background: var(--primary); color: white; }
+  .tier-row-active { background: #e8f8f5 !important; }
+  .tier-row-active td { font-weight: 600; color: var(--success); }
+
+  /* Scenario tags */
+  .scenario-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .scenario-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .scenario-tag .color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .scenario-tag:hover { box-shadow: var(--shadow); }
+  .scenario-tag.selected { border-color: var(--accent); background: #e8f4fd; }
+  .scenario-tag .remove {
+    margin-left: 4px;
+    color: var(--text-light);
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .scenario-tag .remove:hover { color: var(--danger); }
+
+  /* Chart */
+  .chart-container {
+    position: relative;
+    height: 350px;
+    margin: 16px 0;
+  }
+
+  /* Comparison */
+  .compare-grid {
+    display: grid;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .compare-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .compare-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .compare-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    position: relative;
+  }
+  .compare-card .compare-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--bg);
+  }
+  .compare-card .compare-header .color-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .compare-card .compare-header h3 { font-size: 14px; margin: 0; }
+  .compare-metric { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--bg); font-size: 13px; }
+  .compare-metric .label { color: var(--text-light); }
+  .compare-metric .val { font-weight: 600; }
+  .compare-best { color: var(--success) !important; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .compare-grid.cols-2,
+    .compare-grid.cols-3 { grid-template-columns: 1fr; }
+    .tabs { flex-wrap: wrap; }
+  }
+
+  .hidden { display: none !important; }
+
+  /* Scrollable amortization */
+  .amort-scroll { max-height: 400px; overflow-y: auto; }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-light);
+  }
+  .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 14px; }
+
+  .inline-flex { display: flex; align-items: center; gap: 8px; }
+
+  .toggle-link {
+    font-size: 13px;
+    color: var(--accent);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-weight: 500;
+  }
+  .toggle-link:hover { text-decoration: underline; }
+
+  .note-box {
+    background: #fff9e6;
+    border-left: 3px solid var(--warning);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #856404;
+    border-radius: 0 4px 4px 0;
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Matthews Servicing Fee Calculator</h1>
+  <p>Lender program analysis &amp; multi-year revenue projections</p>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('calculator')">Fee Calculator</button>
+    <button class="tab-btn" onclick="switchTab('projection')">Multi-Year Projection</button>
+    <button class="tab-btn" onclick="switchTab('compare')">Compare Scenarios</button>
+    <button class="tab-btn" onclick="switchTab('reference')">Lender Reference</button>
+  </div>
+
+  <!-- ===================== TAB 1: FEE CALCULATOR ===================== -->
+  <div id="tab-calculator" class="tab-content active">
+    <div class="card">
+      <h2>Loan Scenario Setup</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="lender" onchange="onLenderChange()">
+            <option value="">Select a lender...</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+            <option value="symetra">Symetra</option>
+            <option value="assurity">Assurity</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Program</label>
+          <select id="program" onchange="onProgramChange()">
+            <option value="">Select lender first...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Annual Loan Volume ($)</label>
+          <input type="text" id="annualVolume" placeholder="e.g. 50,000,000" oninput="formatCurrency(this)">
+          <div class="hint" id="volumeHint"></div>
+        </div>
+        <div class="form-group">
+          <label>Individual Loan Size ($)</label>
+          <input type="text" id="loanSize" placeholder="e.g. 5,000,000" oninput="formatCurrency(this)">
+          <div class="hint" id="loanSizeHint"></div>
+        </div>
+        <div class="form-group">
+          <label>Interest Rate (%)</label>
+          <input type="number" id="interestRate" value="6.5" step="0.05" min="0" max="20">
+        </div>
+        <div class="form-group">
+          <label>Amortization (Years)</label>
+          <input type="number" id="amortYears" value="30" min="1" max="40">
+        </div>
+        <div class="form-group">
+          <label>Loan Term (Years)</label>
+          <input type="number" id="termYears" value="5" min="1" max="30">
+        </div>
+        <div class="form-group">
+          <label>Scenario Name</label>
+          <input type="text" id="scenarioName" placeholder="e.g. Base Case">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calculate()">Calculate</button>
+        <button class="btn btn-success" onclick="saveScenario()">Save Scenario</button>
+      </div>
+    </div>
+
+    <!-- Lender Info Panel -->
+    <div id="lenderInfoPanel" class="card hidden">
+      <h2>Lender Details</h2>
+      <div id="lenderInfoContent" class="lender-info"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsPanel" class="card hidden">
+      <h2>Calculation Results</h2>
+      <div id="resultsContent"></div>
+    </div>
+
+    <!-- Amortization Schedule -->
+    <div id="amortPanel" class="card hidden">
+      <div class="inline-flex">
+        <h2 style="border:none; margin:0; padding:0;">Amortization &amp; Servicing Fee Schedule</h2>
+        <button class="toggle-link" onclick="toggleAmort()">(show/hide)</button>
+      </div>
+      <div id="amortContent" class="amort-scroll hidden" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2: MULTI-YEAR PROJECTION ===================== -->
+  <div id="tab-projection" class="tab-content">
+    <div class="card">
+      <h2>Multi-Year Revenue Projection</h2>
+      <p style="font-size:13px; color:var(--text-light); margin-bottom:16px;">
+        Project cumulative servicing income as new loans are originated each year and existing loans amortize over their terms.
+      </p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="projLender" onchange="onProjLenderChange()">
+            <option value="">Select a lender...</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+            <option value="symetra">Symetra</option>
+            <option value="assurity">Assurity</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Program</label>
+          <select id="projProgram"><option value="">Select lender first...</option></select>
+        </div>
+        <div class="form-group">
+          <label>New Loans per Year</label>
+          <input type="number" id="projLoansPerYear" value="10" min="1" max="200">
+        </div>
+        <div class="form-group">
+          <label>Avg Loan Size ($)</label>
+          <input type="text" id="projAvgLoanSize" value="5,000,000" oninput="formatCurrency(this)">
+        </div>
+        <div class="form-group">
+          <label>Avg Interest Rate (%)</label>
+          <input type="number" id="projRate" value="6.5" step="0.05" min="0" max="20">
+        </div>
+        <div class="form-group">
+          <label>Amortization (Years)</label>
+          <input type="number" id="projAmort" value="30" min="1" max="40">
+        </div>
+        <div class="form-group">
+          <label>Loan Term (Years)</label>
+          <input type="number" id="projTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group">
+          <label>Projection Years</label>
+          <input type="number" id="projYears" value="10" min="1" max="20">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runProjection()">Run Projection</button>
+      </div>
+    </div>
+
+    <div id="projResultsPanel" class="card hidden">
+      <h2>Projection Results</h2>
+      <div id="projSummary"></div>
+      <div class="chart-container"><canvas id="projChart"></canvas></div>
+      <div id="projTable"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 3: COMPARE ===================== -->
+  <div id="tab-compare" class="tab-content">
+    <div class="card">
+      <h2>Compare Scenarios</h2>
+      <p style="font-size:13px; color:var(--text-light); margin-bottom:16px;">
+        Save scenarios from the Fee Calculator tab, then select them here to compare side by side.
+      </p>
+      <div id="scenarioListCompare"></div>
+    </div>
+    <div id="compareResults"></div>
+  </div>
+
+  <!-- ===================== TAB 4: REFERENCE ===================== -->
+  <div id="tab-reference" class="tab-content">
+    <div class="card">
+      <h2>Lender Reference Guide</h2>
+      <p style="font-size:13px; color:var(--text-light); margin-bottom:16px;">
+        Complete fee structures for all active Matthews correspondent lenders.
+      </p>
+      <div id="referenceContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================
+// LENDER DATA MODEL
+// ===========================
+const LENDERS = {
+  ready_capital: {
+    name: 'Ready Capital',
+    type: 'Agency',
+    typeClass: 'tag-agency',
+    footprint: 'Nationwide',
+    assetTypes: ['Multifamily'],
+    loanSize: { min: 1200000, max: 7000000 },
+    minVolume: 15000000,
+    programs: {
+      'freddie_sbl': { name: 'Freddie SBL' }
+    },
+    registration: false,
+    payment: 'Within 60 days following end of calendar year',
+    reporting: 'Quarterly servicing file with calculations',
+    // Servicing strip: tiered by annual volume. "Lesser of X bps or Y% of Freddie Mac servicing fee"
+    // The service fee (Freddie Mac servicing fee) is what the lender collects, and Matthews gets a share.
+    // For Ready Capital, the strip is calculated as lesser of: bps on balance OR % of Freddie servicing fee.
+    tiers: [
+      { min: 15000000, max: 29999999, bps: 5, pctOfFee: 0.12, label: '$15M – $29.9M' },
+      { min: 30000000, max: 49999999, bps: 6, pctOfFee: 0.14, label: '$30M – $49.9M' },
+      { min: 50000000, max: 99999999, bps: 7, pctOfFee: 0.16, label: '$50M – $99.9M' },
+      { min: 100000000, max: Infinity, bps: 8, pctOfFee: 0.18, label: '$100M+' }
+    ],
+    calcType: 'lesser_of_bps_or_pct',
+    // Freddie SBL typical servicing fee assumed ~44 bps (industry standard for SBL)
+    defaultServiceFeeBps: 44
+  },
+  lument: {
+    name: 'Lument',
+    type: 'DUS',
+    typeClass: 'tag-dus',
+    footprint: 'Nationwide',
+    assetTypes: ['Multifamily'],
+    loanSize: { min: 0, max: Infinity },
+    minVolume: null,
+    programs: {
+      'freddie_sbl': { name: 'Freddie SBL' },
+      'fannie_sbl': { name: 'Fannie SBL' },
+      'fannie_conventional': { name: 'Fannie Conventional' }
+    },
+    registration: true,
+    payment: 'Annually within 45 days of previous calendar year',
+    reporting: 'Not specified',
+    // Servicing split: % of servicing fee varies by program and volume
+    programTiers: {
+      'freddie_sbl': [
+        { min: 0, max: 50000000, pct: 0.05, label: '$0 – $50M' },
+        { min: 50000001, max: 100000000, pct: 0.08, label: '$50M – $100M' },
+        { min: 100000001, max: Infinity, pct: 0.10, label: '$100M+' }
+      ],
+      'fannie_sbl': [
+        { min: 0, max: 50000000, pct: 0.05, label: '$0 – $50M' },
+        { min: 50000001, max: 100000000, pct: 0.08, label: '$50M – $100M' },
+        { min: 100000001, max: Infinity, pct: 0.10, label: '$100M+' }
+      ],
+      'fannie_conventional': [
+        { min: 0, max: 50000000, pct: 0.05, label: '$0 – $50M' },
+        { min: 50000001, max: 100000000, pct: null, label: '$50M – $100M', lesserOf: { pct: 0.10, bps: 5 } },
+        { min: 100000001, max: Infinity, pct: null, label: '$100M+', lesserOf: { pct: 0.10, bps: 5 } }
+      ]
+    },
+    calcType: 'pct_of_fee_by_program',
+    defaultServiceFeeBps: 25
+  },
+  newpoint: {
+    name: 'NewPoint Real Estate Capital',
+    type: 'DUS',
+    typeClass: 'tag-dus',
+    footprint: 'Not specified',
+    assetTypes: ['Not specified'],
+    loanSize: { min: 0, max: Infinity },
+    minVolume: 50000000,
+    programs: {
+      'freddie_mac': { name: 'Freddie Mac' },
+      'fannie_mae': { name: 'Fannie Mae' },
+      'fha': { name: 'FHA' }
+    },
+    registration: true,
+    payment: 'Quarterly, end of month following end of quarter',
+    reporting: 'Quarterly calculations from lender',
+    tiers: [
+      { min: 50000000, max: 100000000, pct: 0.05, label: '$50M – $100M' },
+      { min: 100000001, max: 200000000, pct: 0.10, label: '$100M – $200M' },
+      { min: 200000001, max: Infinity, pct: 0.15, label: '$200M+' }
+    ],
+    calcType: 'pct_of_fee',
+    defaultServiceFeeBps: 25
+  },
+  regions: {
+    name: 'Regions',
+    type: 'DUS',
+    typeClass: 'tag-dus',
+    footprint: 'Nationwide',
+    assetTypes: ['Multifamily'],
+    loanSize: { min: 0, max: Infinity },
+    minVolume: null,
+    programs: {
+      'freddie_sbl': { name: 'Freddie Mac SBL' },
+      'fannie_mae': { name: 'Fannie Mae' },
+      'freddie_conventional': { name: 'Freddie Mac Conventional' },
+      'freddie_tah': { name: 'Freddie Mac TAH' },
+      'hud': { name: 'HUD' }
+    },
+    registration: false,
+    payment: 'Within 60 days following end of calendar year',
+    reporting: 'Not specified',
+    // Servicing strip only applies to Fannie Mae & Freddie Mac SBL
+    servicingPrograms: ['freddie_sbl', 'fannie_mae'],
+    tiers: [
+      { min: 0, max: 25000000, pct: 0.075, label: '≤ $25M' },
+      { min: 25000001, max: Infinity, pct: 0.10, label: '> $25M' }
+    ],
+    calcType: 'pct_of_fee_servicing_only',
+    defaultServiceFeeBps: 25,
+    note: 'Servicing strip applies to Fannie Mae & Freddie Mac SBL only. Reduced or eliminated for Fannie Mae loans with modified loss-sharing structures. Freddie Mac Conventional, Freddie Mac TAH, and HUD have origination-based compensation, not servicing strips.'
+  },
+  symetra: {
+    name: 'Symetra',
+    type: 'Insurance Company',
+    typeClass: 'tag-insurance',
+    footprint: 'Nationwide (including Hawaii & Alaska)',
+    assetTypes: ['Multifamily', 'Industrial', 'Retail', 'Office', 'Multi/single-tenant'],
+    loanSize: { min: 750000, max: 20000000 },
+    minVolume: null,
+    programs: {
+      'symetra_loans': { name: 'All Symetra Loans' }
+    },
+    registration: true,
+    payment: 'Not specified',
+    reporting: 'Remittance reports; annual financial statements within 120 days of fiscal year-end',
+    // Service fee: 10 bps. Split with Essex Financial Services.
+    serviceFeeBps: 10,
+    essexSplit: [
+      { upbMin: 0, upbMax: Infinity, loanMin: 0, loanMax: 5000000, matthewsPct: 0.10, label: 'Any UPB, Loan ≤ $5M' },
+      { upbMin: 0, upbMax: 250000000, loanMin: 5000001, loanMax: Infinity, matthewsPct: 0.25, label: 'UPB ≤ $250M, Loan > $5M' },
+      { upbMin: 250000001, upbMax: Infinity, loanMin: 5000001, loanMax: Infinity, matthewsPct: 0.35, label: 'UPB > $250M, Loan > $5M' }
+    ],
+    calcType: 'bps_with_essex_split'
+  },
+  assurity: {
+    name: 'Assurity',
+    type: 'Insurance Company',
+    typeClass: 'tag-insurance',
+    footprint: 'Southeast',
+    assetTypes: ['Multifamily', 'Industrial', 'Retail', 'Office'],
+    loanSize: { min: 1000000, max: 5000000 },
+    minVolume: null,
+    programs: {
+      'assurity_loans': { name: 'All Assurity Loans' }
+    },
+    registration: false,
+    payment: 'Not specified',
+    reporting: 'Remittance reports; annual financial statements within 120 days of fiscal year-end',
+    serviceFeeBps: 12.5,
+    calcType: 'flat_bps'
+  }
+};
+
+// ===========================
+// STATE
+// ===========================
+let scenarios = [];
+let currentResults = null;
+let projChart = null;
+const SCENARIO_COLORS = ['#2e86de', '#10ac84', '#f0932b', '#ee5a24', '#8854d0', '#20bf6b', '#eb3b5a', '#3867d6'];
+
+// ===========================
+// UTILITY FUNCTIONS
+// ===========================
+function fmt(n) {
+  if (n == null || isNaN(n)) return '$0';
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtD(n, d) {
+  if (n == null || isNaN(n)) return '$0';
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function fmtPct(n) {
+  return (n * 100).toFixed(2) + '%';
+}
+function fmtBps(n) {
+  return n.toFixed(1) + ' bps';
+}
+
+function parseCurrency(str) {
+  if (!str) return 0;
+  return parseFloat(String(str).replace(/[^0-9.]/g, '')) || 0;
+}
+
+function formatCurrency(el) {
+  let v = el.value.replace(/[^0-9.]/g, '');
+  if (!v) return;
+  let parts = v.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  el.value = parts.join('.');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name === 'calculator' ? 'fee' : name === 'projection' ? 'multi' : name === 'compare' ? 'compare' : 'ref')) {
+      b.classList.add('active');
+    }
+  });
+  if (name === 'compare') renderCompareTab();
+  if (name === 'reference') renderReference();
+}
+
+// ===========================
+// LENDER / PROGRAM SELECTION
+// ===========================
+function onLenderChange() {
+  const lenderId = document.getElementById('lender').value;
+  const programSel = document.getElementById('program');
+  programSel.innerHTML = '';
+  document.getElementById('lenderInfoPanel').classList.add('hidden');
+  document.getElementById('resultsPanel').classList.add('hidden');
+  document.getElementById('amortPanel').classList.add('hidden');
+
+  if (!lenderId) {
+    programSel.innerHTML = '<option value="">Select lender first...</option>';
+    return;
+  }
+
+  const lender = LENDERS[lenderId];
+  const programs = Object.entries(lender.programs);
+  if (programs.length === 1) {
+    programSel.innerHTML = `<option value="${programs[0][0]}">${programs[0][1].name}</option>`;
+  } else {
+    programSel.innerHTML = '<option value="">Select program...</option>' +
+      programs.map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('');
+  }
+
+  showLenderInfo(lenderId);
+  updateHints(lenderId);
+}
+
+function onProgramChange() {
+  const lenderId = document.getElementById('lender').value;
+  if (lenderId) showLenderInfo(lenderId);
+}
+
+function onProjLenderChange() {
+  const lenderId = document.getElementById('projLender').value;
+  const programSel = document.getElementById('projProgram');
+  programSel.innerHTML = '';
+  if (!lenderId) {
+    programSel.innerHTML = '<option value="">Select lender first...</option>';
+    return;
+  }
+  const lender = LENDERS[lenderId];
+  const programs = Object.entries(lender.programs);
+  if (programs.length === 1) {
+    programSel.innerHTML = `<option value="${programs[0][0]}">${programs[0][1].name}</option>`;
+  } else {
+    programSel.innerHTML = '<option value="">Select program...</option>' +
+      programs.map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('');
+  }
+}
+
+function updateHints(lenderId) {
+  const lender = LENDERS[lenderId];
+  const volHint = document.getElementById('volumeHint');
+  const sizeHint = document.getElementById('loanSizeHint');
+
+  if (lender.minVolume) {
+    volHint.textContent = `Min: ${fmt(lender.minVolume)} annually`;
+    volHint.style.color = '#e17055';
+  } else {
+    volHint.textContent = 'No minimum volume';
+    volHint.style.color = '';
+  }
+
+  if (lender.loanSize && lender.loanSize.min > 0) {
+    const maxStr = lender.loanSize.max === Infinity ? 'no max' : fmt(lender.loanSize.max);
+    sizeHint.textContent = `Range: ${fmt(lender.loanSize.min)} – ${maxStr}`;
+  } else {
+    sizeHint.textContent = '';
+  }
+}
+
+function showLenderInfo(lenderId) {
+  const lender = LENDERS[lenderId];
+  const programId = document.getElementById('program').value;
+  const panel = document.getElementById('lenderInfoPanel');
+  const content = document.getElementById('lenderInfoContent');
+
+  let tierHtml = '';
+  if (lender.calcType === 'lesser_of_bps_or_pct') {
+    tierHtml = `<h3>Servicing Strip Tiers</h3>
+      <table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>BPS</th><th>% of Freddie Servicing Fee</th><th>Structure</th></tr></thead><tbody>
+      ${lender.tiers.map(t => `<tr><td style="text-align:left">${t.label}</td><td>${t.bps} bps</td><td>${(t.pctOfFee*100).toFixed(0)}%</td><td>Lesser of the two</td></tr>`).join('')}
+      </tbody></table>`;
+  } else if (lender.calcType === 'pct_of_fee_by_program') {
+    const prog = programId && lender.programTiers[programId] ? programId : Object.keys(lender.programTiers)[0];
+    const tiers = lender.programTiers[prog];
+    tierHtml = `<h3>Servicing Fee Tiers (${lender.programs[prog].name})</h3>
+      <table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>Matthews' % of Servicing Fee</th></tr></thead><tbody>
+      ${tiers.map(t => {
+        const val = t.pct != null ? fmtPct(t.pct) : `Lesser of ${fmtPct(t.lesserOf.pct)} or ${t.lesserOf.bps} bps`;
+        return `<tr><td style="text-align:left">${t.label}</td><td>${val}</td></tr>`;
+      }).join('')}
+      </tbody></table>`;
+  } else if (lender.calcType === 'pct_of_fee') {
+    tierHtml = `<h3>Servicing Fee Tiers</h3>
+      <table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>Matthews' % of Servicing Fee</th></tr></thead><tbody>
+      ${lender.tiers.map(t => `<tr><td style="text-align:left">${t.label}</td><td>${fmtPct(t.pct)}</td></tr>`).join('')}
+      </tbody></table>`;
+  } else if (lender.calcType === 'pct_of_fee_servicing_only') {
+    tierHtml = `<h3>Servicing Strip Tiers (Fannie Mae & Freddie Mac SBL only)</h3>
+      <table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>Matthews' % of Servicing Fee</th></tr></thead><tbody>
+      ${lender.tiers.map(t => `<tr><td style="text-align:left">${t.label}</td><td>${fmtPct(t.pct)}</td></tr>`).join('')}
+      </tbody></table>`;
+    if (lender.note) tierHtml += `<div class="note-box">${lender.note}</div>`;
+  } else if (lender.calcType === 'bps_with_essex_split') {
+    tierHtml = `<h3>Service Fee: ${lender.serviceFeeBps} bps of outstanding balance</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">Split with Essex Financial Services:</p>
+      <table class="tier-table"><thead><tr><th style="text-align:left">Condition</th><th>Essex %</th><th>Matthews %</th></tr></thead><tbody>
+      ${lender.essexSplit.map(s => `<tr><td style="text-align:left">${s.label}</td><td>${fmtPct(1 - s.matthewsPct)}</td><td>${fmtPct(s.matthewsPct)}</td></tr>`).join('')}
+      </tbody></table>`;
+  } else if (lender.calcType === 'flat_bps') {
+    tierHtml = `<h3>Servicing Fee</h3><p style="font-size:14px;">${lender.serviceFeeBps} bps (${fmtPct(lender.serviceFeeBps / 10000)}) of outstanding loan balance — flat rate, no volume tiers.</p>`;
+  }
+
+  content.innerHTML = `
+    <div>
+      <span class="tag ${lender.typeClass}">${lender.type}</span>
+      <strong>${lender.name}</strong>
+    </div>
+    <dl>
+      <dt>Footprint</dt><dd>${lender.footprint}</dd>
+      <dt>Asset Types</dt><dd>${lender.assetTypes.join(', ')}</dd>
+      <dt>Loan Size</dt><dd>${lender.loanSize.min > 0 ? fmt(lender.loanSize.min) + ' – ' + (lender.loanSize.max === Infinity ? 'No max' : fmt(lender.loanSize.max)) : 'Not specified'}</dd>
+      <dt>Min Volume</dt><dd>${lender.minVolume ? fmt(lender.minVolume) + ' annually' : 'None'}</dd>
+      <dt>Registration</dt><dd>${lender.registration ? 'Required' : 'Not required'}</dd>
+      <dt>Payment</dt><dd>${lender.payment}</dd>
+      <dt>Reporting</dt><dd>${lender.reporting}</dd>
+    </dl>
+    ${tierHtml}
+  `;
+  panel.classList.remove('hidden');
+}
+
+// ===========================
+// AMORTIZATION ENGINE
+// ===========================
+function amortize(balance, annualRate, amortYears, termYears) {
+  const monthlyRate = annualRate / 12;
+  const totalPayments = amortYears * 12;
+  const termMonths = termYears * 12;
+  const monthlyPayment = balance * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+
+  const schedule = [];
+  let bal = balance;
+  for (let m = 1; m <= termMonths; m++) {
+    const interest = bal * monthlyRate;
+    const principal = monthlyPayment - interest;
+    const endBal = bal - principal;
+    schedule.push({
+      month: m,
+      year: Math.ceil(m / 12),
+      begBalance: bal,
+      payment: monthlyPayment,
+      interest: interest,
+      principal: principal,
+      endBalance: Math.max(0, endBal)
+    });
+    bal = Math.max(0, endBal);
+  }
+  return { schedule, monthlyPayment };
+}
+
+// ===========================
+// FEE CALCULATION ENGINE
+// ===========================
+function calculateServiceFee(lenderId, programId, annualVolume, loanSize, schedule) {
+  const lender = LENDERS[lenderId];
+
+  if (lender.calcType === 'lesser_of_bps_or_pct') {
+    // Ready Capital: lesser of X bps on balance or Y% of Freddie servicing fee
+    const tier = lender.tiers.find(t => annualVolume >= t.min && annualVolume <= t.max);
+    if (!tier) return { error: `Annual volume ${fmt(annualVolume)} is below the minimum of ${fmt(lender.minVolume)}`, tierLabel: 'Below minimum' };
+
+    const serviceFeeBps = lender.defaultServiceFeeBps;
+    return computeLesserOfBpsOrPct(schedule, tier.bps, tier.pctOfFee, serviceFeeBps, tier.label);
+  }
+
+  if (lender.calcType === 'pct_of_fee_by_program') {
+    // Lument: % of servicing fee, varies by program and volume
+    const tiers = lender.programTiers[programId];
+    if (!tiers) return { error: 'Please select a program' };
+    const tier = tiers.find(t => annualVolume >= t.min && annualVolume <= t.max);
+    if (!tier) return { error: 'No matching tier' };
+
+    const serviceFeeBps = lender.defaultServiceFeeBps;
+    if (tier.pct != null) {
+      return computePctOfFee(schedule, tier.pct, serviceFeeBps, tier.label);
+    } else {
+      // "Lesser of 10% or 5 bps" for Fannie Conventional at higher tiers
+      return computeLesserOfPctOrBps(schedule, tier.lesserOf.pct, tier.lesserOf.bps, serviceFeeBps, tier.label);
+    }
+  }
+
+  if (lender.calcType === 'pct_of_fee') {
+    // NewPoint: % of servicing fees
+    const tier = lender.tiers.find(t => annualVolume >= t.min && annualVolume <= t.max);
+    if (!tier) return { error: `Annual volume ${fmt(annualVolume)} is below the minimum of ${fmt(lender.minVolume)}`, tierLabel: 'Below minimum' };
+    const serviceFeeBps = lender.defaultServiceFeeBps;
+    return computePctOfFee(schedule, tier.pct, serviceFeeBps, tier.label);
+  }
+
+  if (lender.calcType === 'pct_of_fee_servicing_only') {
+    // Regions: servicing strip only for Fannie Mae & Freddie SBL
+    if (!lender.servicingPrograms.includes(programId)) {
+      return {
+        error: `Servicing strip does not apply to ${lender.programs[programId].name}. This program has origination-based compensation only.`,
+        tierLabel: 'N/A — origination only'
+      };
+    }
+    const tier = lender.tiers.find(t => annualVolume >= t.min && annualVolume <= t.max);
+    const serviceFeeBps = lender.defaultServiceFeeBps;
+    return computePctOfFee(schedule, tier.pct, serviceFeeBps, tier.label);
+  }
+
+  if (lender.calcType === 'bps_with_essex_split') {
+    // Symetra: 10 bps service fee, then split with Essex
+    const aggUPB = annualVolume; // Use annual volume as proxy for aggregate UPB
+    const split = lender.essexSplit.find(s =>
+      aggUPB >= s.upbMin && aggUPB <= s.upbMax &&
+      loanSize >= s.loanMin && loanSize <= s.loanMax
+    );
+    if (!split) return { error: 'No matching Essex split tier' };
+    const serviceFeeBps = lender.serviceFeeBps;
+    const matthewsPct = split.matthewsPct;
+    return computeBpsWithSplit(schedule, serviceFeeBps, matthewsPct, split.label);
+  }
+
+  if (lender.calcType === 'flat_bps') {
+    // Assurity: flat 12.5 bps
+    const serviceFeeBps = lender.serviceFeeBps;
+    return computeFlatBps(schedule, serviceFeeBps);
+  }
+
+  return { error: 'Unknown calculation type' };
+}
+
+function computeLesserOfBpsOrPct(schedule, matthewsBps, pctOfFee, serviceFeeBps, tierLabel) {
+  let totalFee = 0, totalMatthews = 0;
+  const yearly = {};
+
+  schedule.forEach(row => {
+    const monthlyServiceFee = row.begBalance * (serviceFeeBps / 10000) / 12;
+    const option1 = row.begBalance * (matthewsBps / 10000) / 12;  // bps on balance
+    const option2 = monthlyServiceFee * pctOfFee;                  // % of servicing fee
+    const matthewsFee = Math.min(option1, option2);
+
+    row.serviceFee = monthlyServiceFee;
+    row.matthewsFee = matthewsFee;
+    totalFee += monthlyServiceFee;
+    totalMatthews += matthewsFee;
+
+    if (!yearly[row.year]) yearly[row.year] = { fee: 0, matthews: 0 };
+    yearly[row.year].fee += monthlyServiceFee;
+    yearly[row.year].matthews += matthewsFee;
+  });
+
+  return {
+    schedule, totalFee, totalMatthews, yearly, tierLabel,
+    description: `Lesser of ${matthewsBps} bps or ${(pctOfFee*100).toFixed(0)}% of ${serviceFeeBps} bps servicing fee`,
+    effectiveBps: (totalMatthews / schedule.reduce((s, r) => s + r.begBalance, 0)) * 12 * 10000
+  };
+}
+
+function computePctOfFee(schedule, pct, serviceFeeBps, tierLabel) {
+  let totalFee = 0, totalMatthews = 0;
+  const yearly = {};
+
+  schedule.forEach(row => {
+    const monthlyServiceFee = row.begBalance * (serviceFeeBps / 10000) / 12;
+    const matthewsFee = monthlyServiceFee * pct;
+
+    row.serviceFee = monthlyServiceFee;
+    row.matthewsFee = matthewsFee;
+    totalFee += monthlyServiceFee;
+    totalMatthews += matthewsFee;
+
+    if (!yearly[row.year]) yearly[row.year] = { fee: 0, matthews: 0 };
+    yearly[row.year].fee += monthlyServiceFee;
+    yearly[row.year].matthews += matthewsFee;
+  });
+
+  return {
+    schedule, totalFee, totalMatthews, yearly, tierLabel,
+    description: `${(pct*100).toFixed(1)}% of ${serviceFeeBps} bps servicing fee`,
+    effectiveBps: totalMatthews / schedule.reduce((s, r) => s + r.begBalance, 0) * 12 * 10000
+  };
+}
+
+function computeLesserOfPctOrBps(schedule, pct, bpsCap, serviceFeeBps, tierLabel) {
+  let totalFee = 0, totalMatthews = 0;
+  const yearly = {};
+
+  schedule.forEach(row => {
+    const monthlyServiceFee = row.begBalance * (serviceFeeBps / 10000) / 12;
+    const option1 = monthlyServiceFee * pct;
+    const option2 = row.begBalance * (bpsCap / 10000) / 12;
+    const matthewsFee = Math.min(option1, option2);
+
+    row.serviceFee = monthlyServiceFee;
+    row.matthewsFee = matthewsFee;
+    totalFee += monthlyServiceFee;
+    totalMatthews += matthewsFee;
+
+    if (!yearly[row.year]) yearly[row.year] = { fee: 0, matthews: 0 };
+    yearly[row.year].fee += monthlyServiceFee;
+    yearly[row.year].matthews += matthewsFee;
+  });
+
+  return {
+    schedule, totalFee, totalMatthews, yearly, tierLabel,
+    description: `Lesser of ${(pct*100).toFixed(0)}% of servicing fee or ${bpsCap} bps`,
+    effectiveBps: totalMatthews / schedule.reduce((s, r) => s + r.begBalance, 0) * 12 * 10000
+  };
+}
+
+function computeBpsWithSplit(schedule, serviceFeeBps, matthewsPct, tierLabel) {
+  let totalFee = 0, totalMatthews = 0;
+  const yearly = {};
+
+  schedule.forEach(row => {
+    const monthlyServiceFee = row.begBalance * (serviceFeeBps / 10000) / 12;
+    const matthewsFee = monthlyServiceFee * matthewsPct;
+
+    row.serviceFee = monthlyServiceFee;
+    row.matthewsFee = matthewsFee;
+    totalFee += monthlyServiceFee;
+    totalMatthews += matthewsFee;
+
+    if (!yearly[row.year]) yearly[row.year] = { fee: 0, matthews: 0 };
+    yearly[row.year].fee += monthlyServiceFee;
+    yearly[row.year].matthews += matthewsFee;
+  });
+
+  return {
+    schedule, totalFee, totalMatthews, yearly, tierLabel,
+    description: `${serviceFeeBps} bps service fee, Matthews receives ${(matthewsPct*100).toFixed(0)}% (Essex split)`,
+    effectiveBps: totalMatthews / schedule.reduce((s, r) => s + r.begBalance, 0) * 12 * 10000
+  };
+}
+
+function computeFlatBps(schedule, serviceFeeBps) {
+  let totalFee = 0, totalMatthews = 0;
+  const yearly = {};
+
+  schedule.forEach(row => {
+    const monthlyFee = row.begBalance * (serviceFeeBps / 10000) / 12;
+    row.serviceFee = monthlyFee;
+    row.matthewsFee = monthlyFee;
+    totalFee += monthlyFee;
+    totalMatthews += monthlyFee;
+
+    if (!yearly[row.year]) yearly[row.year] = { fee: 0, matthews: 0 };
+    yearly[row.year].fee += monthlyFee;
+    yearly[row.year].matthews += monthlyFee;
+  });
+
+  return {
+    schedule, totalFee, totalMatthews, yearly, tierLabel: 'Flat rate',
+    description: `${serviceFeeBps} bps of outstanding balance (100% to Matthews)`,
+    effectiveBps: serviceFeeBps
+  };
+}
+
+// ===========================
+// CALCULATE BUTTON
+// ===========================
+function calculate() {
+  const lenderId = document.getElementById('lender').value;
+  const programId = document.getElementById('program').value;
+  const annualVolume = parseCurrency(document.getElementById('annualVolume').value);
+  const loanSize = parseCurrency(document.getElementById('loanSize').value);
+  const rate = parseFloat(document.getElementById('interestRate').value) / 100;
+  const amortYears = parseInt(document.getElementById('amortYears').value);
+  const termYears = parseInt(document.getElementById('termYears').value);
+
+  if (!lenderId) { alert('Please select a lender.'); return; }
+  if (!programId) { alert('Please select a program.'); return; }
+  if (!loanSize || loanSize <= 0) { alert('Please enter an individual loan size.'); return; }
+
+  const { schedule, monthlyPayment } = amortize(loanSize, rate, amortYears, termYears);
+  const result = calculateServiceFee(lenderId, programId, annualVolume, loanSize, schedule);
+
+  if (result.error) {
+    document.getElementById('resultsPanel').classList.remove('hidden');
+    document.getElementById('resultsContent').innerHTML = `<div class="note-box" style="font-size:14px;">${result.error}</div>`;
+    document.getElementById('amortPanel').classList.add('hidden');
+    currentResults = null;
+    return;
+  }
+
+  currentResults = {
+    lenderId, programId, annualVolume, loanSize, rate, amortYears, termYears,
+    monthlyPayment, result,
+    lenderName: LENDERS[lenderId].name,
+    programName: LENDERS[lenderId].programs[programId].name
+  };
+
+  renderResults(currentResults);
+}
+
+function renderResults(data) {
+  const { result, loanSize, monthlyPayment, rate, termYears, lenderName, programName } = data;
+  const panel = document.getElementById('resultsPanel');
+  const content = document.getElementById('resultsContent');
+
+  const numLoans = data.annualVolume > 0 ? Math.round(data.annualVolume / loanSize) : 1;
+  const totalMatthewsAllLoans = result.totalMatthews * numLoans;
+
+  let yearlyHtml = '';
+  const years = Object.keys(result.yearly).sort((a,b) => a - b);
+  years.forEach(y => {
+    yearlyHtml += `<tr>
+      <td style="text-align:left">Year ${y}</td>
+      <td>${fmtD(result.yearly[y].fee, 2)}</td>
+      <td>${fmtD(result.yearly[y].matthews, 2)}</td>
+      <td>${fmtD(result.yearly[y].fee * numLoans, 2)}</td>
+      <td>${fmtD(result.yearly[y].matthews * numLoans, 2)}</td>
+    </tr>`;
+  });
+
+  content.innerHTML = `
+    <div class="results-grid">
+      <div class="result-box">
+        <div class="label">Lender / Program</div>
+        <div class="value" style="font-size:16px;">${lenderName}</div>
+        <div class="sub">${programName}</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Tier</div>
+        <div class="value" style="font-size:16px;">${result.tierLabel}</div>
+        <div class="sub">${result.description}</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Monthly Payment</div>
+        <div class="value" style="font-size:16px;">${fmtD(monthlyPayment, 2)}</div>
+        <div class="sub">Per loan at ${(rate*100).toFixed(2)}%</div>
+      </div>
+      <div class="result-box highlight">
+        <div class="label">Matthews Fee (per loan, full term)</div>
+        <div class="value">${fmtD(result.totalMatthews, 2)}</div>
+        <div class="sub">Over ${termYears} year${termYears > 1 ? 's' : ''}</div>
+      </div>
+      <div class="result-box highlight">
+        <div class="label">Matthews Fee (all loans, full term)</div>
+        <div class="value">${fmt(totalMatthewsAllLoans)}</div>
+        <div class="sub">${numLoans} loan${numLoans > 1 ? 's' : ''} &times; ${fmtD(result.totalMatthews, 0)}</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Effective Matthews Rate</div>
+        <div class="value" style="font-size:16px;">${fmtBps(result.effectiveBps)}</div>
+        <div class="sub">Annualized on avg balance</div>
+      </div>
+    </div>
+
+    <h3>Annual Breakdown</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left">Year</th>
+            <th>Service Fee (1 loan)</th>
+            <th>Matthews (1 loan)</th>
+            <th>Service Fee (${numLoans} loans)</th>
+            <th>Matthews (${numLoans} loans)</th>
+          </tr>
+        </thead>
+        <tbody>${yearlyHtml}</tbody>
+      </table>
+    </div>
+  `;
+  panel.classList.remove('hidden');
+  renderAmortTable(result.schedule);
+}
+
+function renderAmortTable(schedule) {
+  const panel = document.getElementById('amortPanel');
+  const content = document.getElementById('amortContent');
+
+  let rows = schedule.map(r => `<tr>
+    <td style="text-align:left">${r.month}</td>
+    <td>${fmt(r.begBalance)}</td>
+    <td>${fmtD(r.payment, 2)}</td>
+    <td>${fmtD(r.interest, 2)}</td>
+    <td>${fmtD(r.principal, 2)}</td>
+    <td>${fmt(r.endBalance)}</td>
+    <td>${fmtD(r.serviceFee, 2)}</td>
+    <td>${fmtD(r.matthewsFee, 2)}</td>
+  </tr>`).join('');
+
+  content.innerHTML = `<div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="text-align:left">Month</th>
+        <th>Beg. Balance</th>
+        <th>Payment</th>
+        <th>Interest</th>
+        <th>Principal</th>
+        <th>End Balance</th>
+        <th>Service Fee</th>
+        <th>Matthews Split</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+  panel.classList.remove('hidden');
+}
+
+function toggleAmort() {
+  document.getElementById('amortContent').classList.toggle('hidden');
+}
+
+// ===========================
+// SCENARIO MANAGEMENT
+// ===========================
+function saveScenario() {
+  if (!currentResults) { alert('Please calculate first.'); return; }
+  const name = document.getElementById('scenarioName').value ||
+    `${currentResults.lenderName} — ${currentResults.programName}`;
+
+  scenarios.push({
+    id: Date.now(),
+    name,
+    color: SCENARIO_COLORS[scenarios.length % SCENARIO_COLORS.length],
+    data: { ...currentResults }
+  });
+
+  document.getElementById('scenarioName').value = '';
+  alert(`Scenario "${name}" saved. You now have ${scenarios.length} scenario(s).`);
+}
+
+// ===========================
+// MULTI-YEAR PROJECTION
+// ===========================
+function runProjection() {
+  const lenderId = document.getElementById('projLender').value;
+  const programId = document.getElementById('projProgram').value;
+  const loansPerYear = parseInt(document.getElementById('projLoansPerYear').value);
+  const avgLoanSize = parseCurrency(document.getElementById('projAvgLoanSize').value);
+  const rate = parseFloat(document.getElementById('projRate').value) / 100;
+  const amortYears = parseInt(document.getElementById('projAmort').value);
+  const termYears = parseInt(document.getElementById('projTerm').value);
+  const projYears = parseInt(document.getElementById('projYears').value);
+
+  if (!lenderId) { alert('Please select a lender.'); return; }
+  if (!programId) { alert('Please select a program.'); return; }
+
+  const annualVolume = loansPerYear * avgLoanSize;
+
+  // For each origination year, generate amortization and fee schedule
+  const cohorts = []; // one per origination year
+  for (let origYear = 1; origYear <= projYears; origYear++) {
+    const { schedule } = amortize(avgLoanSize, rate, amortYears, termYears);
+    const feeResult = calculateServiceFee(lenderId, programId, annualVolume, avgLoanSize, schedule);
+    if (feeResult.error) {
+      document.getElementById('projResultsPanel').classList.remove('hidden');
+      document.getElementById('projSummary').innerHTML = `<div class="note-box" style="font-size:14px;">${feeResult.error}</div>`;
+      document.getElementById('projTable').innerHTML = '';
+      return;
+    }
+    cohorts.push({ origYear, feeResult, loansPerYear });
+  }
+
+  // Build year-by-year totals
+  const yearData = [];
+  let cumMatthews = 0;
+  for (let y = 1; y <= projYears; y++) {
+    let yearServiceFee = 0;
+    let yearMatthews = 0;
+    let activeLoans = 0;
+
+    cohorts.forEach(cohort => {
+      const loanYear = y - cohort.origYear + 1; // year of loan life
+      if (loanYear >= 1 && loanYear <= termYears) {
+        const fy = cohort.feeResult.yearly[loanYear];
+        if (fy) {
+          yearServiceFee += fy.fee * cohort.loansPerYear;
+          yearMatthews += fy.matthews * cohort.loansPerYear;
+          activeLoans += cohort.loansPerYear;
+        }
+      }
+    });
+
+    cumMatthews += yearMatthews;
+    yearData.push({
+      year: y,
+      serviceFee: yearServiceFee,
+      matthews: yearMatthews,
+      cumMatthews,
+      activeLoans,
+      newLoans: y <= projYears ? loansPerYear : 0
+    });
+  }
+
+  renderProjection(yearData, LENDERS[lenderId], programId, loansPerYear, avgLoanSize, annualVolume, termYears);
+}
+
+function renderProjection(yearData, lender, programId, loansPerYear, avgLoanSize, annualVolume, termYears) {
+  const panel = document.getElementById('projResultsPanel');
+  const summary = document.getElementById('projSummary');
+  const tableDiv = document.getElementById('projTable');
+
+  const totalMatthews = yearData.reduce((s, y) => s + y.matthews, 0);
+  const peakLoans = Math.max(...yearData.map(y => y.activeLoans));
+  const peakRevenue = Math.max(...yearData.map(y => y.matthews));
+
+  summary.innerHTML = `
+    <div class="results-grid">
+      <div class="result-box highlight">
+        <div class="label">Total Matthews Revenue</div>
+        <div class="value">${fmt(totalMatthews)}</div>
+        <div class="sub">Over ${yearData.length} years</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Peak Annual Revenue</div>
+        <div class="value">${fmt(peakRevenue)}</div>
+        <div class="sub">At ${peakLoans} active loans</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Annual Volume</div>
+        <div class="value">${fmt(annualVolume)}</div>
+        <div class="sub">${loansPerYear} loans &times; ${fmt(avgLoanSize)}</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Peak Active Loans</div>
+        <div class="value">${peakLoans}</div>
+        <div class="sub">After ${Math.min(termYears, yearData.length)} years of origination</div>
+      </div>
+    </div>
+  `;
+
+  // Chart
+  if (projChart) projChart.destroy();
+  const ctx = document.getElementById('projChart').getContext('2d');
+  projChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: yearData.map(y => 'Year ' + y.year),
+      datasets: [
+        {
+          label: 'Annual Matthews Revenue',
+          data: yearData.map(y => y.matthews),
+          backgroundColor: 'rgba(46, 134, 222, 0.7)',
+          borderColor: '#2e86de',
+          borderWidth: 1,
+          yAxisID: 'y',
+          order: 2
+        },
+        {
+          label: 'Cumulative Revenue',
+          data: yearData.map(y => y.cumMatthews),
+          type: 'line',
+          borderColor: '#10ac84',
+          backgroundColor: 'rgba(16, 172, 132, 0.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          fill: true,
+          yAxisID: 'y',
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': ' + fmt(ctx.parsed.y);
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: v => fmt(v)
+          }
+        }
+      }
+    }
+  });
+
+  // Table
+  let rows = yearData.map(y => `<tr>
+    <td style="text-align:left">Year ${y.year}</td>
+    <td>${y.newLoans}</td>
+    <td>${y.activeLoans}</td>
+    <td>${fmt(y.serviceFee)}</td>
+    <td>${fmt(y.matthews)}</td>
+    <td>${fmt(y.cumMatthews)}</td>
+  </tr>`).join('');
+
+  tableDiv.innerHTML = `<h3>Year-by-Year Detail</h3>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th style="text-align:left">Year</th>
+        <th>New Loans</th>
+        <th>Active Loans</th>
+        <th>Total Service Fees</th>
+        <th>Matthews Revenue</th>
+        <th>Cumulative Revenue</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+
+  panel.classList.remove('hidden');
+}
+
+// ===========================
+// COMPARE TAB
+// ===========================
+function renderCompareTab() {
+  const listDiv = document.getElementById('scenarioListCompare');
+  const resultsDiv = document.getElementById('compareResults');
+
+  if (scenarios.length === 0) {
+    listDiv.innerHTML = `<div class="empty-state">
+      <h3>No scenarios saved</h3>
+      <p>Go to the Fee Calculator tab, set up a loan scenario, calculate it, and click "Save Scenario" to add it here.</p>
+    </div>`;
+    resultsDiv.innerHTML = '';
+    return;
+  }
+
+  listDiv.innerHTML = `<div class="scenario-list">
+    ${scenarios.map((s, i) => `
+      <div class="scenario-tag" style="background: ${s.color}15;">
+        <span class="color-dot" style="background:${s.color}"></span>
+        ${s.name}
+        <span class="remove" onclick="removeScenario(${i})">&times;</span>
+      </div>
+    `).join('')}
+  </div>`;
+
+  // Build comparison
+  const colClass = scenarios.length <= 2 ? 'cols-2' : 'cols-3';
+
+  // Find best values for highlighting
+  const metrics = scenarios.map(s => ({
+    totalMatthews: s.data.result.totalMatthews,
+    effectiveBps: s.data.result.effectiveBps,
+    numLoans: s.data.annualVolume > 0 ? Math.round(s.data.annualVolume / s.data.loanSize) : 1
+  }));
+  const bestTotal = Math.max(...metrics.map(m => m.totalMatthews * m.numLoans));
+  const bestBps = Math.max(...metrics.map(m => m.effectiveBps));
+
+  let cards = scenarios.map((s, i) => {
+    const d = s.data;
+    const r = d.result;
+    const numLoans = d.annualVolume > 0 ? Math.round(d.annualVolume / d.loanSize) : 1;
+    const totalAll = r.totalMatthews * numLoans;
+    const isBestTotal = totalAll === bestTotal;
+    const isBestBps = r.effectiveBps === bestBps;
+
+    return `<div class="compare-card" style="border-color: ${s.color}40;">
+      <div class="compare-header">
+        <span class="color-dot" style="background:${s.color}"></span>
+        <h3>${s.name}</h3>
+      </div>
+      <div class="compare-metric"><span class="label">Lender</span><span class="val">${d.lenderName}</span></div>
+      <div class="compare-metric"><span class="label">Program</span><span class="val">${d.programName}</span></div>
+      <div class="compare-metric"><span class="label">Loan Size</span><span class="val">${fmt(d.loanSize)}</span></div>
+      <div class="compare-metric"><span class="label">Annual Volume</span><span class="val">${fmt(d.annualVolume)}</span></div>
+      <div class="compare-metric"><span class="label">Rate</span><span class="val">${(d.rate*100).toFixed(2)}%</span></div>
+      <div class="compare-metric"><span class="label">Term</span><span class="val">${d.termYears} yr / ${d.amortYears} yr amort</span></div>
+      <div class="compare-metric"><span class="label">Tier</span><span class="val">${r.tierLabel}</span></div>
+      <div class="compare-metric"><span class="label">Fee (per loan)</span><span class="val">${fmtD(r.totalMatthews, 0)}</span></div>
+      <div class="compare-metric"><span class="label">Fee (all ${numLoans} loans)</span><span class="val ${isBestTotal ? 'compare-best' : ''}">${fmt(totalAll)}</span></div>
+      <div class="compare-metric"><span class="label">Effective Rate</span><span class="val ${isBestBps ? 'compare-best' : ''}">${fmtBps(r.effectiveBps)}</span></div>
+    </div>`;
+  }).join('');
+
+  resultsDiv.innerHTML = `<div class="card">
+    <h2>Side-by-Side Comparison</h2>
+    <div class="compare-grid ${colClass}">${cards}</div>
+  </div>`;
+
+  // Comparison chart
+  if (scenarios.length >= 2) {
+    resultsDiv.innerHTML += `<div class="card"><h2>Annual Matthews Revenue by Scenario</h2><div class="chart-container"><canvas id="compareChart"></canvas></div></div>`;
+
+    setTimeout(() => {
+      const ctx = document.getElementById('compareChart').getContext('2d');
+      const maxYears = Math.max(...scenarios.map(s => Object.keys(s.data.result.yearly).length));
+      const labels = Array.from({ length: maxYears }, (_, i) => 'Year ' + (i + 1));
+
+      const datasets = scenarios.map(s => {
+        const numLoans = s.data.annualVolume > 0 ? Math.round(s.data.annualVolume / s.data.loanSize) : 1;
+        const data = labels.map((_, i) => {
+          const y = s.data.result.yearly[i + 1];
+          return y ? y.matthews * numLoans : 0;
+        });
+        return {
+          label: s.name,
+          data,
+          borderColor: s.color,
+          backgroundColor: s.color + '30',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.1
+        };
+      });
+
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.parsed.y) } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => fmt(v) } } }
+        }
+      });
+    }, 100);
+  }
+}
+
+function removeScenario(idx) {
+  scenarios.splice(idx, 1);
+  renderCompareTab();
+}
+
+// ===========================
+// REFERENCE TAB
+// ===========================
+function renderReference() {
+  const div = document.getElementById('referenceContent');
+  let html = '';
+
+  for (const [id, lender] of Object.entries(LENDERS)) {
+    let tierHtml = '';
+    if (lender.calcType === 'lesser_of_bps_or_pct') {
+      tierHtml = `<table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>BPS on Balance</th><th>% of Freddie Servicing Fee</th><th>Rule</th></tr></thead><tbody>
+        ${lender.tiers.map(t => `<tr><td style="text-align:left">${t.label}</td><td>${t.bps} bps</td><td>${(t.pctOfFee*100).toFixed(0)}%</td><td>Lesser of the two</td></tr>`).join('')}
+        </tbody></table>`;
+    } else if (lender.calcType === 'pct_of_fee_by_program') {
+      for (const [pid, tiers] of Object.entries(lender.programTiers)) {
+        tierHtml += `<p style="font-weight:600;margin-top:8px;">${lender.programs[pid].name}:</p>
+          <table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>Matthews' Split</th></tr></thead><tbody>
+          ${tiers.map(t => {
+            const val = t.pct != null ? fmtPct(t.pct) : `Lesser of ${fmtPct(t.lesserOf.pct)} or ${t.lesserOf.bps} bps`;
+            return `<tr><td style="text-align:left">${t.label}</td><td>${val}</td></tr>`;
+          }).join('')}
+          </tbody></table>`;
+      }
+    } else if (lender.calcType === 'pct_of_fee' || lender.calcType === 'pct_of_fee_servicing_only') {
+      tierHtml = `<table class="tier-table"><thead><tr><th style="text-align:left">Annual Volume</th><th>Matthews' %</th></tr></thead><tbody>
+        ${lender.tiers.map(t => `<tr><td style="text-align:left">${t.label}</td><td>${fmtPct(t.pct)}</td></tr>`).join('')}
+        </tbody></table>`;
+      if (lender.note) tierHtml += `<div class="note-box">${lender.note}</div>`;
+    } else if (lender.calcType === 'bps_with_essex_split') {
+      tierHtml = `<p>Service fee: ${lender.serviceFeeBps} bps, split with Essex Financial Services:</p>
+        <table class="tier-table"><thead><tr><th style="text-align:left">Condition</th><th>Essex</th><th>Matthews</th></tr></thead><tbody>
+        ${lender.essexSplit.map(s => `<tr><td style="text-align:left">${s.label}</td><td>${fmtPct(1 - s.matthewsPct)}</td><td>${fmtPct(s.matthewsPct)}</td></tr>`).join('')}
+        </tbody></table>`;
+    } else if (lender.calcType === 'flat_bps') {
+      tierHtml = `<p>${lender.serviceFeeBps} bps of outstanding loan balance — flat rate, 100% to Matthews.</p>`;
+    }
+
+    const programs = Object.values(lender.programs).map(p => p.name).join(', ');
+
+    html += `<div class="lender-info" style="margin-bottom:20px;">
+      <div style="margin-bottom:8px;">
+        <span class="tag ${lender.typeClass}">${lender.type}</span>
+        <strong style="font-size:15px;">${lender.name}</strong>
+      </div>
+      <dl>
+        <dt>Programs</dt><dd>${programs}</dd>
+        <dt>Footprint</dt><dd>${lender.footprint}</dd>
+        <dt>Asset Types</dt><dd>${lender.assetTypes.join(', ')}</dd>
+        <dt>Loan Size</dt><dd>${lender.loanSize.min > 0 ? fmt(lender.loanSize.min) + ' – ' + (lender.loanSize.max === Infinity ? 'No max' : fmt(lender.loanSize.max)) : 'Not specified'}</dd>
+        <dt>Min Volume</dt><dd>${lender.minVolume ? fmt(lender.minVolume) + ' annually' : 'None'}</dd>
+        <dt>Registration</dt><dd>${lender.registration ? 'Required' : 'Not required'}</dd>
+        <dt>Payment</dt><dd>${lender.payment}</dd>
+      </dl>
+      <h3 style="margin-top:12px;">Fee Structure</h3>
+      ${tierHtml}
+    </div>`;
+  }
+
+  div.innerHTML = html;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  renderReference();
+});
+</script>
+
+</body>
+</html>
