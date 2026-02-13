@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MATTHEWS™ Servicing Fee Projection Tool</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0C2340;
+    --navy-light: #163a5f;
+    --navy-mid: #1a4975;
+    --primary: #0C2340;
+    --primary-light: #163a5f;
+    --accent: #3B82F6;
+    --accent-light: #60A5FA;
+    --accent-subtle: #DBEAFE;
+    --success: #059669;
+    --success-light: #D1FAE5;
+    --warning: #D97706;
+    --warning-light: #FEF3C7;
+    --danger: #DC2626;
+    --bg: #F1F5F9;
+    --card: #FFFFFF;
+    --text: #1E293B;
+    --text-light: #64748B;
+    --text-muted: #94A3B8;
+    --border: #E2E8F0;
+    --border-light: #F1F5F9;
+    --shadow: 0 1px 3px rgba(12,35,64,0.06), 0 1px 2px rgba(12,35,64,0.04);
+    --shadow-md: 0 4px 6px rgba(12,35,64,0.06), 0 2px 4px rgba(12,35,64,0.04);
+    --shadow-lg: 0 10px 25px rgba(12,35,64,0.08), 0 4px 10px rgba(12,35,64,0.04);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --agent-color: #7C3AED;
+    --company-color: #3B82F6;
+    --white: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(12,35,64,0.25);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 18px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  header .brand-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255,255,255,0.25);
+    align-self: center;
+  }
+  header p {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.3px;
+  }
+
+  .container { max-width: 1440px; margin: 0 auto; padding: 24px; }
+
+  /* ===== TABS ===== */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--navy);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 11px 16px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+  .tab-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+  }
+  .tab-btn.agent-active {
+    background: var(--agent-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.35);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  .card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 20px 0 10px;
+  }
+
+  /* ===== FORMS ===== */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+  .form-group select,
+  .form-group input {
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-group select:focus,
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  }
+  .form-group .hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2563EB; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #047857; box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
+  .btn-agent { background: var(--agent-color); color: white; }
+  .btn-agent:hover { background: #6D28D9; box-shadow: 0 2px 8px rgba(124,58,237,0.3); }
+  .btn-sm { padding: 6px 12px; font-size: 11px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* ===== RESULTS ===== */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .result-box {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .result-box .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+  }
+  .result-box .value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--navy);
+    margin-top: 4px;
+  }
+  .result-box .sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .result-box.hl-blue {
+    background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+    border-color: #BFDBFE;
+  }
+  .result-box.hl-blue .value { color: var(--accent); }
+  .result-box.hl-purple {
+    background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+    border-color: #DDD6FE;
+  }
+  .result-box.hl-purple .value { color: var(--agent-color); }
+  .result-box.hl-green {
+    background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+    border-color: #A7F3D0;
+  }
+  .result-box.hl-green .value { color: var(--success); }
+
+  /* ===== TABLES ===== */
+  .table-wrap { overflow-x: auto; margin: 12px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th {
+    background: var(--navy);
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    position: sticky;
+    top: 0;
+  }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:nth-child(even) td { background: #F8FAFC; }
+  tbody tr:nth-child(odd) td { background: white; }
+  tbody tr:hover td { background: var(--accent-subtle); }
+  .tier-table th { background: var(--navy); color: white; }
+
+  /* Stacking table */
+  .stack-table td.cohort { font-weight: 600; }
+  .stack-table tr.total-row td {
+    font-weight: 700;
+    border-top: 2px solid var(--navy);
+    background: var(--accent-subtle) !important;
+    color: var(--navy);
+  }
+  .stack-table td.empty-cell { background: #F8FAFC !important; color: #CBD5E1; }
+
+  /* Chart */
+  .chart-container {
+    position: relative;
+    height: 380px;
+    margin: 16px 0;
+  }
+
+  /* Fee flow diagram */
+  .fee-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin: 12px 0;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .fee-flow .flow-box {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 100px;
+  }
+  .fee-flow .flow-arrow { color: var(--text-muted); font-size: 18px; }
+  .flow-lender { background: #DBEAFE; color: #1E40AF; }
+  .flow-essex { background: var(--warning-light); color: #92400E; }
+  .flow-matthews { background: #E0E7FF; color: #3730A3; }
+  .flow-company { background: var(--success-light); color: #065F46; }
+  .flow-agent { background: #F5F3FF; color: #5B21B6; }
+
+  /* Compare */
+  .compare-grid {
+    display: grid;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .compare-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .compare-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .compare-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    background: white;
+  }
+  .compare-card .compare-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  .compare-card .compare-header .color-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .compare-card .compare-header h3 { font-size: 13px; margin: 0; text-transform: none; letter-spacing: 0; }
+  .compare-metric { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+  .compare-metric .label { color: var(--text-light); }
+  .compare-metric .val { font-weight: 600; }
+  .compare-best { color: var(--success) !important; }
+
+  .scenario-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .scenario-tag {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border); background: white; transition: all 0.2s;
+  }
+  .scenario-tag .color-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .scenario-tag .remove { margin-left: 4px; color: var(--text-muted); cursor: pointer; font-weight: bold; }
+  .scenario-tag .remove:hover { color: var(--danger); }
+
+  .hidden { display: none !important; }
+  .amort-scroll { max-height: 400px; overflow-y: auto; }
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-light); }
+  .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .inline-flex { display: flex; align-items: center; gap: 8px; }
+  .toggle-link { font-size: 13px; color: var(--accent); cursor: pointer; border: none; background: none; font-weight: 600; }
+  .toggle-link:hover { text-decoration: underline; }
+  .note-box {
+    background: var(--warning-light); border-left: 3px solid var(--warning);
+    padding: 8px 12px; font-size: 12px; color: #92400E;
+    border-radius: 0 4px 4px 0; margin: 8px 0;
+  }
+  .info-box {
+    background: #EFF6FF; border-left: 3px solid var(--accent);
+    padding: 10px 14px; font-size: 13px; color: #1E40AF;
+    border-radius: 0 4px 4px 0; margin: 8px 0;
+  }
+
+  /* Lender info */
+  .lender-info {
+    background: var(--bg); border-radius: var(--radius); padding: 16px; margin: 12px 0; font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .lender-info .tag {
+    display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px; margin-right: 8px;
+  }
+  .tag-agency { background: #DBEAFE; color: #1E40AF; }
+  .tag-dus { background: var(--success-light); color: #065F46; }
+  .tag-insurance { background: var(--warning-light); color: #92400E; }
+  .lender-info dl { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin-top: 8px; }
+  .lender-info dt { font-weight: 600; color: var(--text-light); }
+  .lender-info dd { color: var(--text); }
+
+  /* Year volume inputs */
+  .year-inputs {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .year-input-group {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--bg); border-radius: var(--radius); padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .year-input-group .year-label {
+    font-size: 11px; font-weight: 800; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .year-input-group input {
+    width: 100%; padding: 7px 8px; border: 1.5px solid var(--border);
+    border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 13px; text-align: center;
+  }
+  .year-input-group input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  }
+
+  /* Dual bucket sections for life company lenders */
+  .bucket-section {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+    position: relative;
+    background: white;
+  }
+  .bucket-section h4 {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .bucket-1 { border-color: #93C5FD; }
+  .bucket-1 h4 { color: #1D4ED8; }
+  .bucket-2 { border-color: #6EE7B7; }
+  .bucket-2 h4 { color: var(--success); }
+  .bucket-section .form-group label { font-size: 11px; }
+  .bucket-section .year-inputs { grid-template-columns: repeat(5, 1fr); }
+  .dual-bucket-wrapper { margin-bottom: 16px; }
+
+  /* Parallel stream projection grids */
+  .stream-grids { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .stream-grid {
+    border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px; background: white;
+  }
+  .stream-grid.stream-b1 { border-color: #93C5FD; }
+  .stream-grid.stream-b2 { border-color: #6EE7B7; }
+  .stream-grid h4 {
+    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0 0 4px 0; padding-bottom: 4px;
+  }
+  .stream-grid.stream-b1 h4 { color: #1D4ED8; border-bottom: 2px solid #3B82F6; }
+  .stream-grid.stream-b2 h4 { color: var(--success); border-bottom: 2px solid var(--success); }
+  .stream-grid .fee-schedule {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 4px; margin: 8px 0 12px 0;
+  }
+  .stream-grid .fee-schedule .fee-item {
+    background: var(--bg); border-radius: 4px; padding: 4px 6px; text-align: center; font-size: 11px;
+    border: 1px solid var(--border);
+  }
+  .stream-grid .fee-schedule .fee-item .fee-yr { font-weight: 700; color: var(--text-muted); font-size: 10px; }
+  .stream-grid .fee-schedule .fee-item .fee-val { font-weight: 700; color: var(--navy); font-size: 12px; }
+  .stream-grid table { font-size: 12px; }
+  .stream-grid table th, .stream-grid table td { padding: 3px 6px; }
+
+  .blended-grid {
+    border: 2px solid var(--navy); border-radius: var(--radius-lg);
+    padding: 14px; background: white; margin: 16px 0;
+  }
+  .blended-grid h4 {
+    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0 0 8px 0; padding-bottom: 4px; color: var(--navy);
+    border-bottom: 2px solid var(--navy);
+  }
+
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    .header-inner { padding: 14px 16px; flex-direction: column; gap: 4px; }
+    .header-inner .brand-divider { display: none; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .year-inputs { grid-template-columns: 1fr 1fr; }
+    .compare-grid.cols-2, .compare-grid.cols-3 { grid-template-columns: 1fr; }
+    .tabs { flex-wrap: wrap; }
+    .tab-btn { font-size: 11px; padding: 9px 8px; }
+    .fee-flow { flex-direction: column; }
+    .bucket-section .year-inputs { grid-template-columns: 1fr 1fr; }
+    .stream-grids { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>MATTHEWS&trade;</h1>
+    <div class="brand-divider"></div>
+    <p>Servicing Fee Projection Tool</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="calculator" onclick="switchTab('calculator')">Fee Calculator</button>
+    <button class="tab-btn" data-tab="agent" onclick="switchTab('agent')">Agent Projection</button>
+    <button class="tab-btn" data-tab="company" onclick="switchTab('company')">Company View</button>
+    <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')">Compare Scenarios</button>
+    <button class="tab-btn" data-tab="reference" onclick="switchTab('reference')">Reference</button>
+  </div>
+
+  <!-- ===================== TAB 1: FEE CALCULATOR ===================== -->
+  <div id="tab-calculator" class="tab-content active">
+
+    <div class="card">
+      <h2>How Servicing Fees Work</h2>
+      <div id="feeFlowDiagram" class="fee-flow">
+        <div class="flow-box flow-lender">Lender pays<br>servicing fee on UPB</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-matthews">Matthews receives<br>its split</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-company">Company 50%</div>
+        <span class="flow-arrow">+</span>
+        <div class="flow-box flow-agent">Agent 50%</div>
+      </div>
+      <div class="info-box" id="feeFlowInfo">
+        Select a lender below to see how their specific fee structure works. Matthews' share is then split <strong>50/50 between the company and the originating agent</strong>.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Single Loan Calculator</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="calcLender" onchange="onLenderChange('calc')">
+            <option value="symetra">Symetra (Essex)</option>
+            <option value="assurity">Assurity</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+          </select>
+        </div>
+        <div class="form-group" id="calcProgramGroup">
+          <label>Program</label>
+          <select id="calcProgram" onchange="onProgramChange('calc')">
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Loan Balance ($)</label>
+          <input type="text" id="calcLoanSize" placeholder="e.g. 5,000,000" value="5,000,000" oninput="formatCurrency(this)">
+          <div class="hint" id="loanSizeHint">Affects fee calculation</div>
+        </div>
+        <div class="form-group">
+          <label>Interest Rate (%)</label>
+          <input type="number" id="calcRate" value="6.5" step="0.05" min="0" max="20">
+        </div>
+        <div class="form-group">
+          <label>Amortization (Years)</label>
+          <input type="number" id="calcAmort" value="30" min="1" max="40">
+        </div>
+        <div class="form-group">
+          <label>Loan Term (Years)</label>
+          <input type="number" id="calcTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group" id="calcVolumeGroup">
+          <label>Annual Volume ($M)</label>
+          <input type="number" id="calcAnnualVolume" value="50" min="0" max="10000" step="5">
+          <div class="hint">Used for volume-based fee tiers</div>
+        </div>
+        <div class="form-group" id="calcAggUPBGroup" style="display:none;">
+          <label>Aggregate UPB ($M)</label>
+          <input type="number" id="calcAggUPB" value="100" min="0" max="10000" step="10">
+          <div class="hint">Total serviced portfolio for Essex tier</div>
+        </div>
+        <div class="form-group" id="calcFreddieFeeBpsGroup" style="display:none;">
+          <label>Freddie Svc Fee (bps)</label>
+          <input type="number" id="calcFreddieFeeBps" value="44" min="0" max="200" step="1">
+          <div class="hint">Freddie Mac servicing fee in bps</div>
+        </div>
+        <div class="form-group">
+          <label>Scenario Name</label>
+          <input type="text" id="scenarioName" placeholder="e.g. Base Case">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calculate()">Calculate</button>
+        <button class="btn btn-success" onclick="saveScenario()">Save Scenario</button>
+      </div>
+    </div>
+
+    <div id="resultsPanel" class="card hidden">
+      <h2>Results — Single Loan</h2>
+      <div id="resultsContent"></div>
+    </div>
+
+    <div id="amortPanel" class="card hidden">
+      <div class="inline-flex">
+        <h2 style="border:none;margin:0;padding:0;">Monthly Amortization &amp; Fee Schedule</h2>
+        <button class="toggle-link" onclick="toggleAmort()">(show/hide)</button>
+      </div>
+      <div id="amortContent" class="amort-scroll hidden" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2: AGENT PROJECTION ===================== -->
+  <div id="tab-agent" class="tab-content">
+    <div class="card">
+      <h2>Agent Servicing Fee Projection</h2>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">
+        Enter your projected loan volume for each year. See how servicing fees stack as new production adds to
+        the cumulative stream from prior years. All numbers shown are <strong>your 50% agent share</strong>.
+      </p>
+
+      <h3>Lender &amp; Loan Parameters</h3>
+      <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="agentLender" onchange="onLenderChange('agent')">
+            <option value="symetra">Symetra (Essex)</option>
+            <option value="assurity">Assurity</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+          </select>
+        </div>
+        <div class="form-group" id="agentProgramGroup">
+          <label>Program</label>
+          <select id="agentProgram" onchange="onProgramChange('agent')">
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Avg Loan Size ($)</label>
+          <input type="text" id="agentLoanSize" value="5,000,000" oninput="formatCurrency(this)">
+          <div class="hint">Determines fee tier</div>
+        </div>
+        <div class="form-group">
+          <label>Interest Rate (%)</label>
+          <input type="number" id="agentRate" value="6.5" step="0.05" min="0" max="20">
+        </div>
+        <div class="form-group">
+          <label>Amortization (Years)</label>
+          <input type="number" id="agentAmort" value="30" min="1" max="40">
+        </div>
+        <div class="form-group">
+          <label>Loan Term (Years)</label>
+          <input type="number" id="agentTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group" id="agentVolumeGroup">
+          <label>Annual Volume ($M)</label>
+          <input type="number" id="agentAnnualVolume" value="50" min="0" max="10000" step="5">
+          <div class="hint">Used for volume-based fee tiers</div>
+        </div>
+        <div class="form-group" id="agentAggUPBGroup" style="display:none;">
+          <label>Aggregate UPB ($M)</label>
+          <input type="number" id="agentAggUPB" value="100" min="0" max="10000" step="10">
+          <div class="hint">Total serviced portfolio for Essex tier</div>
+        </div>
+        <div class="form-group" id="agentFreddieFeeBpsGroup" style="display:none;">
+          <label>Freddie Svc Fee (bps)</label>
+          <input type="number" id="agentFreddieFeeBps" value="44" min="0" max="200" step="1">
+          <div class="hint">Freddie Mac servicing fee in bps</div>
+        </div>
+      </div>
+
+      <!-- Single bucket inputs (agency/DUS lenders) -->
+      <div id="agentSingleBucket">
+        <h3>Annual Loan Volume (Number of Loans per Year)</h3>
+        <div class="year-inputs">
+          <div class="year-input-group">
+            <div class="year-label">Year 1</div>
+            <input type="number" id="agentY1" value="10" min="0" max="500">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 2</div>
+            <input type="number" id="agentY2" value="10" min="0" max="500">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 3</div>
+            <input type="number" id="agentY3" value="10" min="0" max="500">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 4</div>
+            <input type="number" id="agentY4" value="10" min="0" max="500">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 5</div>
+            <input type="number" id="agentY5" value="10" min="0" max="500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual bucket inputs (life company lenders: Symetra, Assurity) -->
+      <div id="agentDualBucket" class="dual-bucket-wrapper" style="display:none;">
+        <h3>Annual Loan Volume by Size Bucket</h3>
+        <div class="note-box" style="margin-bottom:12px;">
+          Life company lenders use two loan size buckets with different fee splits. Enter the number of loans per year for each bucket.
+        </div>
+        <div class="bucket-section bucket-1">
+          <h4>Bucket 1: Loans &le; $5M (Matthews 10% Essex split)</h4>
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label>Avg Loan Size ($)</label>
+              <input type="text" id="agentB1LoanSize" value="3,500,000" oninput="formatCurrency(this)">
+            </div>
+          </div>
+          <div class="year-inputs">
+            <div class="year-input-group"><div class="year-label">Year 1</div><input type="number" id="agentB1Y1" value="10" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 2</div><input type="number" id="agentB1Y2" value="10" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 3</div><input type="number" id="agentB1Y3" value="10" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 4</div><input type="number" id="agentB1Y4" value="10" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 5</div><input type="number" id="agentB1Y5" value="10" min="0" max="500"></div>
+          </div>
+        </div>
+        <div class="bucket-section bucket-2">
+          <h4>Bucket 2: Loans > $5M (Matthews 25% Essex split)</h4>
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label>Avg Loan Size ($)</label>
+              <input type="text" id="agentB2LoanSize" value="10,000,000" oninput="formatCurrency(this)">
+            </div>
+          </div>
+          <div class="year-inputs">
+            <div class="year-input-group"><div class="year-label">Year 1</div><input type="number" id="agentB2Y1" value="5" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 2</div><input type="number" id="agentB2Y2" value="5" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 3</div><input type="number" id="agentB2Y3" value="5" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 4</div><input type="number" id="agentB2Y4" value="5" min="0" max="500"></div>
+            <div class="year-input-group"><div class="year-label">Year 5</div><input type="number" id="agentB2Y5" value="5" min="0" max="500"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-agent" onclick="runAgentProjection()">Run Agent Projection</button>
+      </div>
+    </div>
+
+    <div id="agentResultsPanel" class="card hidden">
+      <h2>Agent Revenue Projection (Your 50% Share)</h2>
+      <div id="agentSummary"></div>
+      <div class="chart-container"><canvas id="agentStackChart"></canvas></div>
+      <div id="agentStackTable"></div>
+      <div id="agentDetailTable" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 3: COMPANY VIEW ===================== -->
+  <div id="tab-company" class="tab-content">
+    <div class="card">
+      <h2>Company Servicing Fee Projection</h2>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">
+        Project the company's 50% share of total servicing fee revenue across all agent production.
+        Enter total firm-wide origination assumptions.
+      </p>
+
+      <h3>Lender &amp; Firm-Wide Loan Parameters</h3>
+      <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="compLender" onchange="onLenderChange('comp')">
+            <option value="symetra">Symetra (Essex)</option>
+            <option value="assurity">Assurity</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+          </select>
+        </div>
+        <div class="form-group" id="compProgramGroup">
+          <label>Program</label>
+          <select id="compProgram" onchange="onProgramChange('comp')">
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Avg Loan Size ($)</label>
+          <input type="text" id="compLoanSize" value="5,000,000" oninput="formatCurrency(this)">
+        </div>
+        <div class="form-group">
+          <label>Interest Rate (%)</label>
+          <input type="number" id="compRate" value="6.5" step="0.05" min="0" max="20">
+        </div>
+        <div class="form-group">
+          <label>Amortization (Years)</label>
+          <input type="number" id="compAmort" value="30" min="1" max="40">
+        </div>
+        <div class="form-group">
+          <label>Loan Term (Years)</label>
+          <input type="number" id="compTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group" id="compVolumeGroup">
+          <label>Annual Volume ($M)</label>
+          <input type="number" id="compAnnualVolume" value="200" min="0" max="10000" step="5">
+          <div class="hint">Used for volume-based fee tiers</div>
+        </div>
+        <div class="form-group" id="compAggUPBGroup" style="display:none;">
+          <label>Aggregate UPB ($M)</label>
+          <input type="number" id="compAggUPB" value="500" min="0" max="10000" step="10">
+          <div class="hint">Total serviced portfolio for Essex tier</div>
+        </div>
+        <div class="form-group" id="compFreddieFeeBpsGroup" style="display:none;">
+          <label>Freddie Svc Fee (bps)</label>
+          <input type="number" id="compFreddieFeeBps" value="44" min="0" max="200" step="1">
+          <div class="hint">Freddie Mac servicing fee in bps</div>
+        </div>
+      </div>
+
+      <!-- Single bucket inputs (agency/DUS lenders) -->
+      <div id="compSingleBucket">
+        <h3>Total Firm Loan Volume (Number of Loans per Year)</h3>
+        <div class="year-inputs">
+          <div class="year-input-group">
+            <div class="year-label">Year 1</div>
+            <input type="number" id="compY1" value="50" min="0" max="2000">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 2</div>
+            <input type="number" id="compY2" value="60" min="0" max="2000">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 3</div>
+            <input type="number" id="compY3" value="70" min="0" max="2000">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 4</div>
+            <input type="number" id="compY4" value="80" min="0" max="2000">
+          </div>
+          <div class="year-input-group">
+            <div class="year-label">Year 5</div>
+            <input type="number" id="compY5" value="90" min="0" max="2000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual bucket inputs (life company lenders: Symetra, Assurity) -->
+      <div id="compDualBucket" class="dual-bucket-wrapper" style="display:none;">
+        <h3>Total Firm Loan Volume by Size Bucket</h3>
+        <div class="note-box" style="margin-bottom:12px;">
+          Life company lenders use two loan size buckets with different fee splits. Enter the number of loans per year for each bucket.
+        </div>
+        <div class="bucket-section bucket-1">
+          <h4>Bucket 1: Loans &le; $5M (Matthews 10% Essex split)</h4>
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label>Avg Loan Size ($)</label>
+              <input type="text" id="compB1LoanSize" value="3,500,000" oninput="formatCurrency(this)">
+            </div>
+          </div>
+          <div class="year-inputs">
+            <div class="year-input-group"><div class="year-label">Year 1</div><input type="number" id="compB1Y1" value="30" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 2</div><input type="number" id="compB1Y2" value="35" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 3</div><input type="number" id="compB1Y3" value="40" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 4</div><input type="number" id="compB1Y4" value="45" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 5</div><input type="number" id="compB1Y5" value="50" min="0" max="2000"></div>
+          </div>
+        </div>
+        <div class="bucket-section bucket-2">
+          <h4>Bucket 2: Loans > $5M (Matthews 25% Essex split)</h4>
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="form-group">
+              <label>Avg Loan Size ($)</label>
+              <input type="text" id="compB2LoanSize" value="10,000,000" oninput="formatCurrency(this)">
+            </div>
+          </div>
+          <div class="year-inputs">
+            <div class="year-input-group"><div class="year-label">Year 1</div><input type="number" id="compB2Y1" value="20" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 2</div><input type="number" id="compB2Y2" value="25" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 3</div><input type="number" id="compB2Y3" value="30" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 4</div><input type="number" id="compB2Y4" value="35" min="0" max="2000"></div>
+            <div class="year-input-group"><div class="year-label">Year 5</div><input type="number" id="compB2Y5" value="40" min="0" max="2000"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runCompanyProjection()">Run Company Projection</button>
+      </div>
+    </div>
+
+    <div id="compResultsPanel" class="card hidden">
+      <h2>Company Revenue Projection (Company's 50% Share)</h2>
+      <div id="compSummary"></div>
+      <div class="chart-container"><canvas id="compStackChart"></canvas></div>
+      <div id="compStackTable"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 4: COMPARE ===================== -->
+  <div id="tab-compare" class="tab-content">
+    <div class="card">
+      <h2>Compare Scenarios</h2>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">
+        Save scenarios from the Fee Calculator tab to compare different loan sizes and their impact on fees.
+      </p>
+      <div id="scenarioListCompare"></div>
+    </div>
+    <div id="compareResults"></div>
+  </div>
+
+  <!-- ===================== TAB 5: REFERENCE ===================== -->
+  <div id="tab-reference" class="tab-content">
+    <div class="card">
+      <h2>Fee Structure Reference</h2>
+      <div id="referenceContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================
+// LENDER DATA MODEL — all 6 lenders with exact fee structures from source files
+// ===========================
+const LENDERS = {
+  symetra: {
+    name: 'Symetra',
+    type: 'Insurance Company',
+    typeTag: 'tag-insurance',
+    partner: 'Essex Financial Services',
+    minVolume: null,
+    programs: ['Symetra Life'],
+    feeCalcType: 'bps_with_essex_split',
+    baseBps: 10, // 10 bps on UPB
+    // Essex split: Matthews' % depends on individual loan size + aggregate UPB
+    essexTiers: [
+      { maxLoan: 5000000, maxAggUPB: Infinity, matthewsPct: 0.10, label: 'Loan ≤$5M → Matthews 10%' },
+      { maxLoan: Infinity, maxAggUPB: 250000000, matthewsPct: 0.25, label: 'Loan >$5M, UPB ≤$250M → Matthews 25%' },
+      { maxLoan: Infinity, maxAggUPB: Infinity, matthewsPct: 0.35, label: 'Loan >$5M, UPB >$250M → Matthews 35%' }
+    ],
+    description: '10 bps of UPB, split with Essex Financial Services based on loan size and aggregate portfolio.'
+  },
+  assurity: {
+    name: 'Assurity',
+    type: 'Insurance Company',
+    typeTag: 'tag-insurance',
+    partner: null,
+    minVolume: null,
+    programs: ['Assurity Life'],
+    feeCalcType: 'flat_bps',
+    baseBps: 12.5, // 12.5 bps flat — no Essex split
+    description: 'Flat 12.5 bps (0.125%) of outstanding balance. No Essex partnership — Matthews receives the full amount.'
+  },
+  ready_capital: {
+    name: 'Ready Capital',
+    type: 'Agency',
+    typeTag: 'tag-agency',
+    partner: null,
+    minVolume: 15, // $15M
+    programs: ['Freddie SBL'],
+    feeCalcType: 'lesser_of_bps_or_pct',
+    // Tiers: lesser of X bps OR Y% of Freddie Mac servicing fee
+    tiers: [
+      { minVol: 15, maxVol: 30, bps: 5, pct: 0.12, label: '$15M–$30M: lesser of 5 bps or 12%' },
+      { minVol: 30, maxVol: 50, bps: 6, pct: 0.14, label: '$30M–$50M: lesser of 6 bps or 14%' },
+      { minVol: 50, maxVol: 100, bps: 7, pct: 0.16, label: '$50M–$100M: lesser of 7 bps or 16%' },
+      { minVol: 100, maxVol: Infinity, bps: 8, pct: 0.18, label: '$100M+: lesser of 8 bps or 18%' }
+    ],
+    description: 'Lesser of X bps or Y% of Freddie Mac servicing fee, tiered by annual origination volume.'
+  },
+  lument: {
+    name: 'Lument',
+    type: 'DUS',
+    typeTag: 'tag-dus',
+    partner: null,
+    minVolume: null,
+    programs: ['Freddie SBL', 'Fannie SBL', 'Fannie Conventional'],
+    feeCalcType: 'pct_of_fee_by_program',
+    // Tiers vary by program AND volume
+    tiers: {
+      'Freddie SBL': [
+        { minVol: 0, maxVol: 50, pct: 0.05, label: '$0–$50M: 5%' },
+        { minVol: 50, maxVol: 100, pct: 0.08, label: '$50M–$100M: 8%' },
+        { minVol: 100, maxVol: Infinity, pct: 0.10, label: '$100M+: 10%' }
+      ],
+      'Fannie SBL': [
+        { minVol: 0, maxVol: 50, pct: 0.05, label: '$0–$50M: 5%' },
+        { minVol: 50, maxVol: 100, pct: 0.08, label: '$50M–$100M: 8%' },
+        { minVol: 100, maxVol: Infinity, pct: 0.10, label: '$100M+: 10%' }
+      ],
+      'Fannie Conventional': [
+        { minVol: 0, maxVol: 50, pct: 0.05, useLesserOf: false, label: '$0–$50M: 5%' },
+        { minVol: 50, maxVol: 100, pct: 0.10, useLesserOf: true, lesserBps: 5, label: '$50M–$100M: lesser of 10% or 5 bps' },
+        { minVol: 100, maxVol: Infinity, pct: 0.10, useLesserOf: true, lesserBps: 5, label: '$100M+: lesser of 10% or 5 bps' }
+      ]
+    },
+    description: 'Percentage of servicing fee, varies by program (Freddie SBL, Fannie SBL, Fannie Conventional) and annual volume.'
+  },
+  newpoint: {
+    name: 'NewPoint Real Estate Capital',
+    type: 'DUS',
+    typeTag: 'tag-dus',
+    partner: null,
+    minVolume: 50, // $50M
+    programs: ['Freddie Mac', 'Fannie Mae', 'FHA'],
+    feeCalcType: 'pct_of_fee',
+    tiers: [
+      { minVol: 50, maxVol: 100, pct: 0.05, label: '$50M–$100M: 5%' },
+      { minVol: 100, maxVol: 200, pct: 0.10, label: '$100M–$200M: 10%' },
+      { minVol: 200, maxVol: Infinity, pct: 0.15, label: '$200M+: 15%' }
+    ],
+    description: 'Percentage of servicing fees, tiered by annual origination volume. Minimum $50M annual volume.'
+  },
+  regions: {
+    name: 'Regions',
+    type: 'DUS',
+    typeTag: 'tag-dus',
+    partner: null,
+    minVolume: null,
+    programs: ['Freddie SBL', 'Fannie Mae'],
+    feeCalcType: 'pct_of_fee_servicing_only',
+    basePct: 0.075, // 7.5%
+    bonusPct: 0.10,  // 10% if >$25M qualifying
+    bonusThreshold: 25, // $25M
+    description: '7.5% of servicing strip. Increases to 10% if annual qualifying loan volume exceeds $25M.'
+  }
+};
+
+// Default servicing fee in bps for agency/DUS lenders (used when we need a base fee to take a % of)
+const DEFAULT_AGENCY_SVC_FEE_BPS = 44; // typical Freddie/Fannie servicing fee
+
+// ===========================
+// STATE
+// ===========================
+let scenarios = [];
+let currentResults = null;
+let agentChart = null;
+let compChart = null;
+const SCENARIO_COLORS = ['#0C2340','#3B82F6','#059669','#7C3AED','#D97706','#DC2626','#0EA5E9','#8B5CF6'];
+const COHORT_COLORS = ['#0C2340','#1E40AF','#3B82F6','#60A5FA','#93C5FD'];
+
+// ===========================
+// UTILITIES
+// ===========================
+function fmt(n) {
+  if (n == null || isNaN(n)) return '$0';
+  return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function fmtD(n,d) {
+  if (n == null || isNaN(n)) return '$0';
+  return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+}
+function fmtPct(n) { return (n*100).toFixed(1) + '%'; }
+function fmtBps(n) { return n.toFixed(1) + ' bps'; }
+function parseCurrency(str) {
+  if (!str) return 0;
+  return parseFloat(String(str).replace(/[^0-9.]/g,'')) || 0;
+}
+function formatCurrency(el) {
+  let v = el.value.replace(/[^0-9.]/g,'');
+  if (!v) return;
+  let parts = v.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  el.value = parts.join('.');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active','agent-active');
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if (btn) btn.classList.add(name === 'agent' ? 'agent-active' : 'active');
+  if (name === 'compare') renderCompareTab();
+  if (name === 'reference') renderReference();
+}
+
+// ===========================
+// LENDER UI MANAGEMENT
+// ===========================
+function isLifeCompanyLender(lenderId) {
+  return lenderId === 'symetra' || lenderId === 'assurity';
+}
+
+function onLenderChange(prefix) {
+  const lenderId = document.getElementById(prefix + 'Lender').value;
+  const lender = LENDERS[lenderId];
+  const isDualBucket = isLifeCompanyLender(lenderId);
+
+  // Populate programs dropdown
+  const progSelect = document.getElementById(prefix + 'Program');
+  const progGroup = document.getElementById(prefix + 'ProgramGroup');
+  progSelect.innerHTML = lender.programs.map(p => `<option value="${p}">${p}</option>`).join('');
+  progGroup.style.display = lender.programs.length > 1 ? '' : 'none';
+
+  // Show/hide volume input (needed for tiered lenders)
+  const volGroup = document.getElementById(prefix + 'VolumeGroup');
+  const needsVolume = ['lesser_of_bps_or_pct','pct_of_fee_by_program','pct_of_fee','pct_of_fee_servicing_only'].includes(lender.feeCalcType);
+  if (volGroup) volGroup.style.display = needsVolume ? '' : 'none';
+
+  // Show/hide aggregate UPB input (Symetra only)
+  const aggGroup = document.getElementById(prefix + 'AggUPBGroup');
+  if (aggGroup) aggGroup.style.display = lenderId === 'symetra' ? '' : 'none';
+
+  // Show/hide Freddie fee bps input (Ready Capital only)
+  const freddieGroup = document.getElementById(prefix + 'FreddieFeeBpsGroup');
+  if (freddieGroup) freddieGroup.style.display = lenderId === 'ready_capital' ? '' : 'none';
+
+  // Toggle single/dual bucket inputs for projection tabs (agent, comp)
+  const singleBucket = document.getElementById(prefix + 'SingleBucket');
+  const dualBucket = document.getElementById(prefix + 'DualBucket');
+  if (singleBucket && dualBucket) {
+    singleBucket.style.display = isDualBucket ? 'none' : '';
+    dualBucket.style.display = isDualBucket ? '' : 'none';
+
+    // Update bucket 2 label based on lender (Assurity has no Essex split)
+    if (isDualBucket) {
+      const b2Header = dualBucket.querySelectorAll('.bucket-2 h4')[0];
+      if (b2Header) {
+        if (lenderId === 'assurity') {
+          b2Header.innerHTML = 'Bucket 2: Loans > $5M (flat 12.5 bps)';
+        } else {
+          b2Header.innerHTML = 'Bucket 2: Loans > $5M (Matthews 25% Essex split)';
+        }
+      }
+      const b1Header = dualBucket.querySelectorAll('.bucket-1 h4')[0];
+      if (b1Header) {
+        if (lenderId === 'assurity') {
+          b1Header.innerHTML = 'Bucket 1: Loans &le; $5M (flat 12.5 bps)';
+        } else {
+          b1Header.innerHTML = 'Bucket 1: Loans &le; $5M (Matthews 10% Essex split)';
+        }
+      }
+    }
+  }
+
+  // Hide single avg loan size for projection tabs when using dual buckets
+  // (each bucket has its own avg loan size)
+  const loanSizeEl = document.getElementById(prefix + 'LoanSize');
+  if (loanSizeEl && (prefix === 'agent' || prefix === 'comp')) {
+    const loanSizeGroup = loanSizeEl.closest('.form-group');
+    if (loanSizeGroup) loanSizeGroup.style.display = isDualBucket ? 'none' : '';
+  }
+
+  // Update fee flow diagram if on calc tab
+  if (prefix === 'calc') updateFeeFlowDiagram(lenderId);
+
+  // Update loan size hint
+  const hint = document.getElementById(prefix === 'calc' ? 'loanSizeHint' : null);
+  if (hint) {
+    if (lenderId === 'symetra') hint.textContent = 'Affects Essex split tier';
+    else hint.textContent = 'Individual loan balance';
+  }
+}
+
+function onProgramChange(prefix) {
+  // Currently programs affect Lument's fee tiers — no additional UI changes needed
+}
+
+function updateFeeFlowDiagram(lenderId) {
+  const lender = LENDERS[lenderId];
+  const diagram = document.getElementById('feeFlowDiagram');
+  const info = document.getElementById('feeFlowInfo');
+
+  if (lender.feeCalcType === 'bps_with_essex_split') {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name} pays<br>${lender.baseBps} bps on UPB</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-essex">Essex takes their share<br>(based on loan size)</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>its split</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    info.innerHTML = `<strong>${lender.name}</strong> servicing fee is <strong>${lender.baseBps} bps (${(lender.baseBps/100).toFixed(3)}%)</strong> of UPB, paid monthly.
+      Matthews' share depends on loan size via Essex Financial Services:
+      <strong>loans &le; $5M &rarr; 10%</strong>, <strong>loans > $5M (UPB &le; $250M) &rarr; 25%</strong>, <strong>loans > $5M (UPB > $250M) &rarr; 35%</strong>.
+      Then split <strong>50/50 company/agent</strong>.`;
+  } else if (lender.feeCalcType === 'flat_bps') {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name} pays<br>${lender.baseBps} bps on UPB</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>full ${lender.baseBps} bps</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    info.innerHTML = `<strong>${lender.name}</strong> pays a flat <strong>${lender.baseBps} bps (${(lender.baseBps/100).toFixed(3)}%)</strong> of UPB.
+      No Essex partnership — Matthews receives the full fee, then split <strong>50/50 company/agent</strong>.`;
+  } else if (lender.feeCalcType === 'lesser_of_bps_or_pct') {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name}<br>Freddie servicing fee</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>lesser of bps or %</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    info.innerHTML = `<strong>${lender.name}</strong>: Matthews receives the <strong>lesser of X bps or Y% of the Freddie Mac servicing fee</strong>,
+      tiered by annual origination volume. Min volume: $${lender.minVolume}M. Then split <strong>50/50 company/agent</strong>.`;
+  } else {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name}<br>servicing fee</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>% of svc fee</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    let extra = lender.feeCalcType === 'pct_of_fee_servicing_only'
+      ? `Base: <strong>${(lender.basePct*100).toFixed(1)}%</strong> of servicing strip. <strong>${(lender.bonusPct*100)}%</strong> if annual qualifying volume exceeds $${lender.bonusThreshold}M.`
+      : `Percentage of servicing fees, tiered by annual volume.${lender.minVolume ? ' Min volume: $' + lender.minVolume + 'M.' : ''}`;
+    info.innerHTML = `<strong>${lender.name}</strong>: ${extra} Then split <strong>50/50 company/agent</strong>.`;
+  }
+}
+
+// ===========================
+// AMORTIZATION ENGINE
+// Matches the Service Fee Calculator spreadsheet exactly
+// ===========================
+function amortize(balance, annualRate, amortYears, termYears) {
+  const monthlyRate = annualRate / 12;
+  const totalPayments = amortYears * 12;
+  const termMonths = termYears * 12;
+  const monthlyPayment = balance * (monthlyRate * Math.pow(1+monthlyRate, totalPayments)) / (Math.pow(1+monthlyRate, totalPayments) - 1);
+
+  const schedule = [];
+  let bal = balance;
+  for (let m = 1; m <= termMonths; m++) {
+    const interest = bal * monthlyRate;
+    const principal = monthlyPayment - interest;
+    const endBal = bal - principal;
+    schedule.push({
+      month: m,
+      year: Math.ceil(m/12),
+      begBalance: bal,
+      payment: monthlyPayment,
+      interest: interest,
+      principal: principal,
+      endBalance: Math.max(0, endBal)
+    });
+    bal = Math.max(0, endBal);
+  }
+  return { schedule, monthlyPayment };
+}
+
+// ===========================
+// UNIFIED SERVICING FEE ENGINE — handles all 6 lender types
+// ===========================
+
+// Get Matthews' effective bps for a given lender, loan, and context
+function getMatthewsEffectiveBps(lenderId, loanSize, opts) {
+  const lender = LENDERS[lenderId];
+  opts = opts || {};
+  const annualVolM = opts.annualVolumeM || 50;
+  const aggUPB = opts.aggUPB || 100000000;
+  const program = opts.program || lender.programs[0];
+  const freddieSvcFeeBps = opts.freddieSvcFeeBps || DEFAULT_AGENCY_SVC_FEE_BPS;
+
+  switch (lender.feeCalcType) {
+    case 'bps_with_essex_split': {
+      // Symetra: 10 bps base, split with Essex
+      let matthewsPct = lender.essexTiers[0].matthewsPct; // default 10%
+      for (const tier of lender.essexTiers) {
+        if (loanSize <= tier.maxLoan && aggUPB <= tier.maxAggUPB) {
+          matthewsPct = tier.matthewsPct;
+          break;
+        }
+      }
+      return {
+        totalSvcFeeBps: lender.baseBps,
+        matthewsBps: lender.baseBps * matthewsPct,
+        matthewsPct: matthewsPct,
+        tierLabel: lender.essexTiers.find(t => loanSize <= t.maxLoan && aggUPB <= t.maxAggUPB)?.label || '',
+        method: 'essex_split'
+      };
+    }
+
+    case 'flat_bps': {
+      // Assurity: flat 12.5 bps, Matthews gets 100%
+      return {
+        totalSvcFeeBps: lender.baseBps,
+        matthewsBps: lender.baseBps,
+        matthewsPct: 1.0,
+        tierLabel: `Flat ${lender.baseBps} bps — no split`,
+        method: 'flat_bps'
+      };
+    }
+
+    case 'lesser_of_bps_or_pct': {
+      // Ready Capital: lesser of X bps or Y% of Freddie svc fee
+      const tier = lender.tiers.find(t => annualVolM >= t.minVol && annualVolM < t.maxVol) || lender.tiers[lender.tiers.length - 1];
+      const bpsAmount = tier.bps; // e.g. 5 bps
+      const pctAmount = freddieSvcFeeBps * tier.pct; // e.g. 44 bps * 12% = 5.28 bps
+      const matthewsBps = Math.min(bpsAmount, pctAmount);
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: matthewsBps / freddieSvcFeeBps,
+        tierLabel: tier.label,
+        bpsOption: bpsAmount,
+        pctOption: pctAmount,
+        method: 'lesser_of'
+      };
+    }
+
+    case 'pct_of_fee_by_program': {
+      // Lument: % of servicing fee, varies by program
+      const programTiers = lender.tiers[program] || lender.tiers[lender.programs[0]];
+      const tier = programTiers.find(t => annualVolM >= t.minVol && annualVolM < t.maxVol) || programTiers[programTiers.length - 1];
+
+      let matthewsBps;
+      if (tier.useLesserOf) {
+        // Fannie Conventional at higher volumes: lesser of pct or X bps
+        const pctBps = freddieSvcFeeBps * tier.pct;
+        matthewsBps = Math.min(pctBps, tier.lesserBps);
+      } else {
+        matthewsBps = freddieSvcFeeBps * tier.pct;
+      }
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: matthewsBps / freddieSvcFeeBps,
+        tierLabel: tier.label,
+        method: 'pct_of_fee'
+      };
+    }
+
+    case 'pct_of_fee': {
+      // NewPoint: % of servicing fees by volume
+      const tier = lender.tiers.find(t => annualVolM >= t.minVol && annualVolM < t.maxVol) || lender.tiers[lender.tiers.length - 1];
+      if (!tier || annualVolM < lender.minVolume) {
+        return {
+          totalSvcFeeBps: freddieSvcFeeBps,
+          matthewsBps: 0,
+          matthewsPct: 0,
+          tierLabel: `Below minimum volume ($${lender.minVolume}M)`,
+          method: 'pct_of_fee'
+        };
+      }
+      const matthewsBps = freddieSvcFeeBps * tier.pct;
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: tier.pct,
+        tierLabel: tier.label,
+        method: 'pct_of_fee'
+      };
+    }
+
+    case 'pct_of_fee_servicing_only': {
+      // Regions: % of servicing strip
+      const pct = annualVolM > lender.bonusThreshold ? lender.bonusPct : lender.basePct;
+      const matthewsBps = freddieSvcFeeBps * pct;
+      const label = annualVolM > lender.bonusThreshold
+        ? `${(pct*100)}% (>$${lender.bonusThreshold}M qualifying)`
+        : `${(pct*100).toFixed(1)}% (base rate)`;
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: pct,
+        tierLabel: label,
+        method: 'pct_of_fee'
+      };
+    }
+
+    default:
+      return { totalSvcFeeBps: 0, matthewsBps: 0, matthewsPct: 0, tierLabel: 'Unknown', method: 'unknown' };
+  }
+}
+
+// Compute service fees for an amortization schedule using the unified lender engine
+function computeServiceFees(schedule, loanSize, lenderId, opts) {
+  const feeInfo = getMatthewsEffectiveBps(lenderId, loanSize, opts);
+  const totalSvcFeeBps = feeInfo.totalSvcFeeBps;
+  const matthewsBps = feeInfo.matthewsBps;
+
+  let totalServiceFee = 0, totalMatthews = 0;
+  const yearly = {};
+
+  schedule.forEach(row => {
+    // Monthly service fee = beginning balance * (totalSvcFeeBps / 10000) / 12
+    const monthlyServiceFee = row.begBalance * (totalSvcFeeBps / 10000) / 12;
+    // Matthews' share = beginning balance * (matthewsBps / 10000) / 12
+    const matthewsFee = row.begBalance * (matthewsBps / 10000) / 12;
+
+    row.serviceFee = monthlyServiceFee;
+    row.matthewsFee = matthewsFee;
+    row.companyFee = matthewsFee * 0.5;
+    row.agentFee = matthewsFee * 0.5;
+    totalServiceFee += monthlyServiceFee;
+    totalMatthews += matthewsFee;
+
+    if (!yearly[row.year]) yearly[row.year] = { serviceFee:0, matthews:0, company:0, agent:0 };
+    yearly[row.year].serviceFee += monthlyServiceFee;
+    yearly[row.year].matthews += matthewsFee;
+    yearly[row.year].company += matthewsFee * 0.5;
+    yearly[row.year].agent += matthewsFee * 0.5;
+  });
+
+  return {
+    schedule, totalServiceFee, totalMatthews,
+    totalCompany: totalMatthews * 0.5,
+    totalAgent: totalMatthews * 0.5,
+    yearly,
+    matthewsPct: feeInfo.matthewsPct,
+    matthewsBps: feeInfo.matthewsBps,
+    totalSvcFeeBps: totalSvcFeeBps,
+    tierLabel: feeInfo.tierLabel,
+    method: feeInfo.method,
+    feeInfo: feeInfo,
+    loanSize: loanSize,
+    lenderId: lenderId
+  };
+}
+
+// Helper: read common form fields for a prefix
+function readFormInputs(prefix) {
+  const lenderId = document.getElementById(prefix + 'Lender').value;
+  const lender = LENDERS[lenderId];
+  const progEl = document.getElementById(prefix + 'Program');
+  const program = progEl ? progEl.value : lender.programs[0];
+  const loanSize = parseCurrency(document.getElementById(prefix + 'LoanSize').value);
+  const rate = parseFloat(document.getElementById(prefix + 'Rate').value) / 100;
+  const amortYears = parseInt(document.getElementById(prefix + 'Amort').value);
+  const termYears = parseInt(document.getElementById(prefix + 'Term').value);
+
+  const volEl = document.getElementById(prefix + 'AnnualVolume');
+  const annualVolumeM = volEl ? parseFloat(volEl.value) || 50 : 50;
+
+  const aggEl = document.getElementById(prefix + 'AggUPB');
+  const aggUPB = aggEl ? (parseFloat(aggEl.value) || 100) * 1000000 : 100000000;
+
+  const freddieEl = document.getElementById(prefix + 'FreddieFeeBps');
+  const freddieSvcFeeBps = freddieEl ? parseFloat(freddieEl.value) || DEFAULT_AGENCY_SVC_FEE_BPS : DEFAULT_AGENCY_SVC_FEE_BPS;
+
+  return {
+    lenderId, lender, program, loanSize, rate, amortYears, termYears,
+    opts: { annualVolumeM, aggUPB, program, freddieSvcFeeBps }
+  };
+}
+
+// ===========================
+// SINGLE LOAN CALCULATOR
+// ===========================
+function calculate() {
+  const inputs = readFormInputs('calc');
+  const { lenderId, loanSize, rate, amortYears, termYears, opts } = inputs;
+
+  if (!loanSize || loanSize <= 0) { alert('Please enter a loan size.'); return; }
+
+  const { schedule, monthlyPayment } = amortize(loanSize, rate, amortYears, termYears);
+  const result = computeServiceFees(schedule, loanSize, lenderId, opts);
+
+  currentResults = { loanSize, rate, amortYears, termYears, monthlyPayment, result, lenderId };
+  renderResults(currentResults);
+}
+
+function renderResults(data) {
+  const { result, loanSize, monthlyPayment, rate, termYears, lenderId } = data;
+  const lender = LENDERS[lenderId];
+  const panel = document.getElementById('resultsPanel');
+  const content = document.getElementById('resultsContent');
+
+  let yearlyHtml = '';
+  Object.keys(result.yearly).sort((a,b)=>a-b).forEach(y => {
+    const yr = result.yearly[y];
+    yearlyHtml += `<tr>
+      <td style="text-align:left">Year ${y}</td>
+      <td>${fmtD(yr.serviceFee,2)}</td>
+      <td>${fmtD(yr.matthews,2)}</td>
+      <td>${fmtD(yr.company,2)}</td>
+      <td>${fmtD(yr.agent,2)}</td>
+    </tr>`;
+  });
+
+  // Build the fee method description
+  let feeMethodDesc;
+  if (result.method === 'essex_split') {
+    feeMethodDesc = `${fmtPct(result.matthewsPct)} of ${result.totalSvcFeeBps} bps via Essex`;
+  } else if (result.method === 'flat_bps') {
+    feeMethodDesc = `Flat ${result.totalSvcFeeBps} bps — no split`;
+  } else if (result.method === 'lesser_of') {
+    feeMethodDesc = `${fmtBps(result.matthewsBps)} (lesser of ${result.feeInfo.bpsOption} bps / ${fmtBps(result.feeInfo.pctOption)})`;
+  } else {
+    feeMethodDesc = `${fmtPct(result.matthewsPct)} of ${result.totalSvcFeeBps} bps svc fee`;
+  }
+
+  content.innerHTML = `
+    <div class="lender-info">
+      <span class="tag ${lender.typeTag}">${lender.type}</span>
+      <strong>${lender.name}</strong> — ${result.tierLabel}
+    </div>
+    <div class="results-grid">
+      <div class="result-box">
+        <div class="label">Loan Balance</div>
+        <div class="value" style="font-size:18px;">${fmt(loanSize)}</div>
+        <div class="sub">${(rate*100).toFixed(2)}%, ${data.amortYears}yr amort</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Matthews Fee Rate</div>
+        <div class="value" style="font-size:16px;">${fmtBps(result.matthewsBps)}</div>
+        <div class="sub">${feeMethodDesc}</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Total Service Fee (${termYears}yr)</div>
+        <div class="value" style="font-size:16px;">${fmtD(result.totalServiceFee,2)}</div>
+        <div class="sub">${fmtBps(result.totalSvcFeeBps)} of declining UPB</div>
+      </div>
+      <div class="result-box hl-blue">
+        <div class="label">Matthews Total (${termYears}yr)</div>
+        <div class="value">${fmtD(result.totalMatthews,2)}</div>
+        <div class="sub">${fmtBps(result.matthewsBps)} effective</div>
+      </div>
+      <div class="result-box hl-green">
+        <div class="label">Company Share (${termYears}yr)</div>
+        <div class="value">${fmtD(result.totalCompany,2)}</div>
+        <div class="sub">50% of Matthews</div>
+      </div>
+      <div class="result-box hl-purple">
+        <div class="label">Agent Share (${termYears}yr)</div>
+        <div class="value">${fmtD(result.totalAgent,2)}</div>
+        <div class="sub">50% of Matthews</div>
+      </div>
+    </div>
+
+    <h3>Annual Breakdown — Single Loan</h3>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th style="text-align:left">Year</th>
+        <th>Service Fee</th>
+        <th>Matthews Share</th>
+        <th>Company (50%)</th>
+        <th>Agent (50%)</th>
+      </tr></thead>
+      <tbody>${yearlyHtml}</tbody>
+    </table></div>
+  `;
+  panel.classList.remove('hidden');
+  renderAmortTable(result.schedule);
+}
+
+function renderAmortTable(schedule) {
+  const panel = document.getElementById('amortPanel');
+  const content = document.getElementById('amortContent');
+
+  let rows = schedule.map(r => `<tr>
+    <td style="text-align:left">${r.month}</td>
+    <td>${fmt(r.begBalance)}</td>
+    <td>${fmtD(r.payment,2)}</td>
+    <td>${fmtD(r.interest,2)}</td>
+    <td>${fmtD(r.principal,2)}</td>
+    <td>${fmt(r.endBalance)}</td>
+    <td>${fmtD(r.serviceFee,2)}</td>
+    <td>${fmtD(r.matthewsFee,2)}</td>
+    <td>${fmtD(r.agentFee,2)}</td>
+  </tr>`).join('');
+
+  content.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th style="text-align:left">Month</th><th>Beg. Balance</th><th>Payment</th>
+      <th>Interest</th><th>Principal</th><th>End Balance</th>
+      <th>Service Fee</th><th>Matthews</th><th>Agent (50%)</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+  panel.classList.remove('hidden');
+}
+
+function toggleAmort() {
+  document.getElementById('amortContent').classList.toggle('hidden');
+}
+
+// ===========================
+// SCENARIO MANAGEMENT
+// ===========================
+function saveScenario() {
+  if (!currentResults) { alert('Calculate first.'); return; }
+  const lender = LENDERS[currentResults.lenderId];
+  const defaultName = `${lender.name} — ${fmt(currentResults.loanSize)}`;
+  const name = document.getElementById('scenarioName').value || defaultName;
+  scenarios.push({
+    id: Date.now(), name,
+    color: SCENARIO_COLORS[scenarios.length % SCENARIO_COLORS.length],
+    data: { ...currentResults }
+  });
+  document.getElementById('scenarioName').value = '';
+  alert(`Scenario "${name}" saved (${scenarios.length} total).`);
+}
+
+// ===========================
+// STACKING PROJECTION ENGINE
+// Matches the Projection tab in the spreadsheet exactly:
+// - Each cohort has a 5-year fee schedule (declining with UPB amortization)
+// - New cohorts stack on top of prior cohorts
+// - Revenue accumulates while loans are in their term, then drops off
+// ===========================
+function buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, viewShare, lenderId, opts) {
+  // viewShare: 0.5 for agent or company, 1.0 for full Matthews
+  lenderId = lenderId || 'symetra';
+  opts = opts || {};
+  const numOrigYears = yearlyLoans.length;
+  const totalYears = numOrigYears + termYears - 1; // years until last cohort expires
+
+  // Build fee schedule for one loan
+  const { schedule } = amortize(loanSize, rate, amortYears, termYears);
+  const fees = computeServiceFees(schedule, loanSize, lenderId, opts);
+
+  // Annual matthews fee per loan for each year of loan life (1..termYears)
+  const feePerLoanByYear = {}; // year-of-life → annual matthews fee for 1 loan
+  for (let y = 1; y <= termYears; y++) {
+    feePerLoanByYear[y] = fees.yearly[y] ? fees.yearly[y].matthews : 0;
+  }
+
+  // Build cohort matrix: cohorts[origYear][calendarYear] = matthews revenue
+  const cohorts = []; // array of { origYear, numLoans, yearlyRevenue: {calYear: amount} }
+  for (let oy = 0; oy < numOrigYears; oy++) {
+    const numLoans = yearlyLoans[oy];
+    if (numLoans === 0) {
+      cohorts.push({ origYear: oy+1, numLoans: 0, yearlyRevenue: {} });
+      continue;
+    }
+    const yearlyRevenue = {};
+    for (let loanYr = 1; loanYr <= termYears; loanYr++) {
+      const calYear = (oy+1) + (loanYr - 1); // calendar year
+      // Matthews revenue for this cohort in this calendar year
+      // = fee per loan per year-of-life * number of loans * viewShare
+      yearlyRevenue[calYear] = feePerLoanByYear[loanYr] * numLoans * viewShare;
+    }
+    cohorts.push({ origYear: oy+1, numLoans, yearlyRevenue });
+  }
+
+  // Build totals
+  const yearTotals = [];
+  let cumulative = 0;
+  for (let cy = 1; cy <= totalYears; cy++) {
+    let total = 0;
+    cohorts.forEach(c => {
+      if (c.yearlyRevenue[cy]) total += c.yearlyRevenue[cy];
+    });
+    cumulative += total;
+    yearTotals.push({ year: cy, annual: total, cumulative });
+  }
+
+  return { cohorts, yearTotals, totalYears, feePerLoanByYear, fees, viewShare, lenderId };
+}
+
+// ===========================
+// DUAL BUCKET HELPERS
+// ===========================
+// Read year inputs for a bucket: returns [y1, y2, y3, y4, y5]
+function readYearInputs(idPrefix) {
+  return [1,2,3,4,5].map(y => parseInt(document.getElementById(idPrefix + 'Y' + y).value) || 0);
+}
+
+// Build a dual-bucket blended projection: runs two separate projections, then merges
+function buildDualBucketProjection(prefix, rate, amortYears, termYears, viewShare, lenderId, opts) {
+  const b1LoanSize = parseCurrency(document.getElementById(prefix + 'B1LoanSize').value);
+  const b2LoanSize = parseCurrency(document.getElementById(prefix + 'B2LoanSize').value);
+  const b1Loans = readYearInputs(prefix + 'B1');
+  const b2Loans = readYearInputs(prefix + 'B2');
+
+  if (!b1LoanSize && !b2LoanSize) { alert('Enter at least one bucket loan size.'); return null; }
+
+  // Build separate projections for each bucket
+  const b1Opts = { ...opts, aggUPB: opts.aggUPB }; // small loans always get 10% Essex
+  const b2Opts = { ...opts, aggUPB: opts.aggUPB }; // large loans get 25% or 35%
+
+  const proj1 = b1LoanSize > 0 && b1Loans.some(n => n > 0)
+    ? buildStackingProjection(b1LoanSize, rate, amortYears, termYears, b1Loans, viewShare, lenderId, b1Opts)
+    : null;
+  const proj2 = b2LoanSize > 0 && b2Loans.some(n => n > 0)
+    ? buildStackingProjection(b2LoanSize, rate, amortYears, termYears, b2Loans, viewShare, lenderId, b2Opts)
+    : null;
+
+  if (!proj1 && !proj2) { alert('Enter loan data for at least one bucket.'); return null; }
+
+  // Merge the two projections into a blended result
+  const totalYears = Math.max(proj1 ? proj1.totalYears : 0, proj2 ? proj2.totalYears : 0);
+
+  // Blended year totals
+  const yearTotals = [];
+  let cumulative = 0;
+  for (let cy = 1; cy <= totalYears; cy++) {
+    const b1Annual = proj1 ? (proj1.yearTotals.find(y => y.year === cy)?.annual || 0) : 0;
+    const b2Annual = proj2 ? (proj2.yearTotals.find(y => y.year === cy)?.annual || 0) : 0;
+    const total = b1Annual + b2Annual;
+    cumulative += total;
+    yearTotals.push({ year: cy, annual: total, cumulative, b1Annual, b2Annual });
+  }
+
+  // Merge cohorts from both buckets (prefix labels to distinguish)
+  const cohorts = [];
+  if (proj1) {
+    proj1.cohorts.forEach(c => {
+      if (c.numLoans > 0) cohorts.push({ ...c, bucketLabel: '≤$5M', bucket: 1 });
+    });
+  }
+  if (proj2) {
+    proj2.cohorts.forEach(c => {
+      if (c.numLoans > 0) cohorts.push({ ...c, bucketLabel: '>$5M', bucket: 2 });
+    });
+  }
+
+  const totalB1Loans = proj1 ? proj1.cohorts.reduce((s,c) => s + c.numLoans, 0) : 0;
+  const totalB2Loans = proj2 ? proj2.cohorts.reduce((s,c) => s + c.numLoans, 0) : 0;
+
+  return {
+    isDualBucket: true,
+    bucket1: proj1,
+    bucket2: proj2,
+    cohorts,
+    yearTotals,
+    totalYears,
+    viewShare,
+    lenderId,
+    totalB1Loans,
+    totalB2Loans,
+    b1LoanSize,
+    b2LoanSize,
+    fees: proj1 ? proj1.fees : proj2.fees // for lender info display
+  };
+}
+
+// ===========================
+// AGENT PROJECTION
+// ===========================
+function runAgentProjection() {
+  const inputs = readFormInputs('agent');
+  const { lenderId, loanSize, rate, amortYears, termYears, opts } = inputs;
+
+  if (isLifeCompanyLender(lenderId)) {
+    // Dual bucket mode
+    const proj = buildDualBucketProjection('agent', rate, amortYears, termYears, 0.5, lenderId, opts);
+    if (!proj) return;
+    renderAgentProjection(proj, null, termYears, lenderId);
+  } else {
+    // Single bucket mode
+    const yearlyLoans = readYearInputs('agent');
+    if (!loanSize) { alert('Enter average loan size.'); return; }
+    const proj = buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, 0.5, lenderId, opts);
+    renderAgentProjection(proj, loanSize, termYears, lenderId);
+  }
+}
+
+function renderAgentProjection(proj, loanSize, termYears, lenderId) {
+  lenderId = lenderId || 'symetra';
+  const lender = LENDERS[lenderId];
+  const panel = document.getElementById('agentResultsPanel');
+  const summary = document.getElementById('agentSummary');
+
+  const totalAgent = proj.yearTotals.reduce((s,y) => s + y.annual, 0);
+  const peakAnnual = Math.max(...proj.yearTotals.map(y => y.annual));
+
+  if (proj.isDualBucket) {
+    // Dual bucket summary
+    const totalLoans = proj.totalB1Loans + proj.totalB2Loans;
+    const b1Total = proj.bucket1 ? proj.bucket1.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const b2Total = proj.bucket2 ? proj.bucket2.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const b1Info = proj.bucket1 ? proj.bucket1.fees.feeInfo : null;
+    const b2Info = proj.bucket2 ? proj.bucket2.fees.feeInfo : null;
+
+    summary.innerHTML = `
+      <div class="lender-info">
+        <span class="tag ${lender.typeTag}">${lender.type}</span>
+        <strong>${lender.name}</strong> — Dual Bucket Projection
+      </div>
+      <div class="results-grid">
+        <div class="result-box hl-purple">
+          <div class="label">Your Total Agent Income</div>
+          <div class="value">${fmt(totalAgent)}</div>
+          <div class="sub">Over ${proj.totalYears} years (blended)</div>
+        </div>
+        <div class="result-box hl-purple">
+          <div class="label">Peak Annual Income</div>
+          <div class="value">${fmt(peakAnnual)}</div>
+          <div class="sub">Your 50% share</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Bucket 1 (&le;$5M)</div>
+          <div class="value" style="font-size:16px;">${fmt(b1Total)}</div>
+          <div class="sub">${proj.totalB1Loans} loans @ ${b1Info ? fmtBps(b1Info.matthewsBps) : '—'}</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Bucket 2 (>$5M)</div>
+          <div class="value" style="font-size:16px;">${fmt(b2Total)}</div>
+          <div class="sub">${proj.totalB2Loans} loans @ ${b2Info ? fmtBps(b2Info.matthewsBps) : '—'}</div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Single bucket summary
+    const totalLoans = proj.cohorts.reduce((s,c) => s + c.numLoans, 0);
+    const feeInfo = proj.fees.feeInfo;
+
+    summary.innerHTML = `
+      <div class="lender-info">
+        <span class="tag ${lender.typeTag}">${lender.type}</span>
+        <strong>${lender.name}</strong> — ${feeInfo.tierLabel}
+      </div>
+      <div class="results-grid">
+        <div class="result-box hl-purple">
+          <div class="label">Your Total Agent Income</div>
+          <div class="value">${fmt(totalAgent)}</div>
+          <div class="sub">Over ${proj.totalYears} years</div>
+        </div>
+        <div class="result-box hl-purple">
+          <div class="label">Peak Annual Income</div>
+          <div class="value">${fmt(peakAnnual)}</div>
+          <div class="sub">Your 50% share</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Total Loans Originated</div>
+          <div class="value" style="font-size:20px;">${totalLoans}</div>
+          <div class="sub">Over 5 years</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Matthews Fee Rate</div>
+          <div class="value" style="font-size:16px;">${fmtBps(feeInfo.matthewsBps)}</div>
+          <div class="sub">Agent = 50% of Matthews share</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Stacked bar chart
+  renderStackedChart('agentStackChart', proj, 'Agent Servicing Income', agentChart, c => { agentChart = c; });
+
+  // Stacking table
+  renderStackTable('agentStackTable', proj, 'Agent');
+
+  // Detailed year-by-year
+  renderDetailTable('agentDetailTable', proj);
+
+  panel.classList.remove('hidden');
+}
+
+// ===========================
+// COMPANY PROJECTION
+// ===========================
+function runCompanyProjection() {
+  const inputs = readFormInputs('comp');
+  const { lenderId, loanSize, rate, amortYears, termYears, opts } = inputs;
+
+  if (isLifeCompanyLender(lenderId)) {
+    const proj = buildDualBucketProjection('comp', rate, amortYears, termYears, 0.5, lenderId, opts);
+    if (!proj) return;
+    renderCompanyProjection(proj, null, termYears, lenderId);
+  } else {
+    const yearlyLoans = readYearInputs('comp');
+    if (!loanSize) { alert('Enter average loan size.'); return; }
+    const proj = buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, 0.5, lenderId, opts);
+    renderCompanyProjection(proj, loanSize, termYears, lenderId);
+  }
+}
+
+function renderCompanyProjection(proj, loanSize, termYears, lenderId) {
+  lenderId = lenderId || 'symetra';
+  const lender = LENDERS[lenderId];
+  const panel = document.getElementById('compResultsPanel');
+  const summary = document.getElementById('compSummary');
+
+  const totalComp = proj.yearTotals.reduce((s,y) => s + y.annual, 0);
+  const peakAnnual = Math.max(...proj.yearTotals.map(y => y.annual));
+
+  if (proj.isDualBucket) {
+    const totalLoans = proj.totalB1Loans + proj.totalB2Loans;
+    const b1Total = proj.bucket1 ? proj.bucket1.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const b2Total = proj.bucket2 ? proj.bucket2.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+
+    summary.innerHTML = `
+      <div class="lender-info">
+        <span class="tag ${lender.typeTag}">${lender.type}</span>
+        <strong>${lender.name}</strong> — Dual Bucket Projection
+      </div>
+      <div class="results-grid">
+        <div class="result-box hl-blue">
+          <div class="label">Total Company Income</div>
+          <div class="value">${fmt(totalComp)}</div>
+          <div class="sub">Over ${proj.totalYears} years (blended)</div>
+        </div>
+        <div class="result-box hl-blue">
+          <div class="label">Peak Annual Income</div>
+          <div class="value">${fmt(peakAnnual)}</div>
+          <div class="sub">Company's 50% share</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Bucket 1 (&le;$5M)</div>
+          <div class="value" style="font-size:16px;">${fmt(b1Total)}</div>
+          <div class="sub">${proj.totalB1Loans} loans</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Bucket 2 (>$5M)</div>
+          <div class="value" style="font-size:16px;">${fmt(b2Total)}</div>
+          <div class="sub">${proj.totalB2Loans} loans</div>
+        </div>
+      </div>
+    `;
+  } else {
+    const totalLoans = proj.cohorts.reduce((s,c) => s + c.numLoans, 0);
+    const feeInfo = proj.fees.feeInfo;
+
+    summary.innerHTML = `
+      <div class="lender-info">
+        <span class="tag ${lender.typeTag}">${lender.type}</span>
+        <strong>${lender.name}</strong> — ${feeInfo.tierLabel}
+      </div>
+      <div class="results-grid">
+        <div class="result-box hl-blue">
+          <div class="label">Total Company Income</div>
+          <div class="value">${fmt(totalComp)}</div>
+          <div class="sub">Over ${proj.totalYears} years</div>
+        </div>
+        <div class="result-box hl-blue">
+          <div class="label">Peak Annual Income</div>
+          <div class="value">${fmt(peakAnnual)}</div>
+          <div class="sub">Company's 50% share</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Total Firm Loans</div>
+          <div class="value" style="font-size:20px;">${totalLoans}</div>
+          <div class="sub">Over 5 years</div>
+        </div>
+        <div class="result-box">
+          <div class="label">Total Matthews Revenue</div>
+          <div class="value" style="font-size:16px;">${fmt(totalComp * 2)}</div>
+          <div class="sub">Before 50/50 split</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderStackedChart('compStackChart', proj, 'Company Servicing Income', compChart, c => { compChart = c; });
+  renderStackTable('compStackTable', proj, 'Company');
+
+  panel.classList.remove('hidden');
+}
+
+// ===========================
+// SHARED CHART & TABLE RENDERERS
+// ===========================
+const BUCKET1_COLORS = ['#0C2340','#163a5f','#1E40AF','#2563EB','#3B82F6']; // navy blues for ≤$5M
+const BUCKET2_COLORS = ['#059669','#047857','#10B981','#34D399','#6EE7B7']; // teals for >$5M
+
+function renderStackedChart(canvasId, proj, title, existingChart, setChart) {
+  if (existingChart) existingChart.destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
+
+  const labels = proj.yearTotals.map(y => 'Year ' + y.year);
+
+  let datasets;
+  if (proj.isDualBucket) {
+    // Dual bucket: two independent stacks side-by-side per year
+    datasets = [];
+    // Bucket 1 cohorts → stack 'b1'
+    proj.cohorts.filter(c => c.bucket === 1 && c.numLoans > 0).forEach(c => {
+      const colorIdx = (c.origYear - 1) % BUCKET1_COLORS.length;
+      datasets.push({
+        label: `≤$5M Yr ${c.origYear} (${c.numLoans})`,
+        data: proj.yearTotals.map(yt => c.yearlyRevenue[yt.year] || 0),
+        backgroundColor: BUCKET1_COLORS[colorIdx] + 'CC',
+        borderColor: BUCKET1_COLORS[colorIdx],
+        borderWidth: 1,
+        stack: 'small'
+      });
+    });
+    // Bucket 2 cohorts → stack 'b2'
+    proj.cohorts.filter(c => c.bucket === 2 && c.numLoans > 0).forEach(c => {
+      const colorIdx = (c.origYear - 1) % BUCKET2_COLORS.length;
+      datasets.push({
+        label: `>$5M Yr ${c.origYear} (${c.numLoans})`,
+        data: proj.yearTotals.map(yt => c.yearlyRevenue[yt.year] || 0),
+        backgroundColor: BUCKET2_COLORS[colorIdx] + 'CC',
+        borderColor: BUCKET2_COLORS[colorIdx],
+        borderWidth: 1,
+        stack: 'large'
+      });
+    });
+  } else {
+    // Single stream: original cohort colors
+    datasets = proj.cohorts.filter(c => c.numLoans > 0).map((c, i) => ({
+      label: `Year ${c.origYear} Cohort (${c.numLoans} loans)`,
+      data: proj.yearTotals.map(yt => c.yearlyRevenue[yt.year] || 0),
+      backgroundColor: COHORT_COLORS[i % COHORT_COLORS.length] + 'CC',
+      borderColor: COHORT_COLORS[i % COHORT_COLORS.length],
+      borderWidth: 1,
+      stack: 'stack1'
+    }));
+  }
+
+  // Cumulative line
+  datasets.push({
+    label: 'Cumulative Income',
+    data: proj.yearTotals.map(y => y.cumulative),
+    type: 'line',
+    borderColor: '#0C2340',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    pointRadius: 4,
+    pointBackgroundColor: '#0C2340',
+    yAxisID: 'y',
+    order: 0
+  });
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display: true, text: title + (proj.isDualBucket ? ' — Parallel Streams (≤$5M | >$5M)' : ' — Stacking Revenue by Cohort'), font: { size: 14 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ctx.dataset.label + ': ' + fmtD(ctx.parsed.y, 0); }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { callback: v => fmt(v) }
+        }
+      }
+    }
+  });
+  setChart(chart);
+}
+
+// Render a single-stream stacking grid (used for each bucket independently)
+function buildStreamGridHTML(bucketProj, totalYears, label, cssClass, loanSizeLabel, feeInfo) {
+  if (!bucketProj) return '';
+  const headers = [];
+  for (let cy = 1; cy <= totalYears; cy++) headers.push(`<th>Yr ${cy}</th>`);
+
+  // Per-loan fee schedule by year-of-life (matches spreadsheet's V column)
+  let feeScheduleItems = '';
+  const termYears = Object.keys(bucketProj.feePerLoanByYear).length;
+  for (let y = 1; y <= termYears; y++) {
+    const perLoan = bucketProj.feePerLoanByYear[y] * bucketProj.viewShare;
+    feeScheduleItems += `<div class="fee-item"><div class="fee-yr">Yr ${y}</div><div class="fee-val">${fmtD(perLoan, 2)}</div></div>`;
+  }
+
+  // Cohort rows
+  let rows = '';
+  bucketProj.cohorts.forEach(c => {
+    if (c.numLoans === 0) return;
+    let cells = '';
+    for (let cy = 1; cy <= totalYears; cy++) {
+      const val = c.yearlyRevenue[cy];
+      cells += val ? `<td class="cohort">${fmtD(val, 0)}</td>` : `<td class="empty-cell">—</td>`;
+    }
+    rows += `<tr><td style="text-align:left;font-weight:600;white-space:nowrap;">Yr ${c.origYear} (${c.numLoans})</td>${cells}</tr>`;
+  });
+
+  // Totals
+  let totalCells = '';
+  let cumCells = '';
+  let cum = 0;
+  for (let cy = 1; cy <= totalYears; cy++) {
+    const yt = bucketProj.yearTotals.find(y => y.year === cy);
+    const annual = yt ? yt.annual : 0;
+    cum += annual;
+    totalCells += `<td>${fmtD(annual, 0)}</td>`;
+    cumCells += `<td>${fmtD(cum, 0)}</td>`;
+  }
+  rows += `<tr class="total-row"><td style="text-align:left">Total</td>${totalCells}</tr>`;
+  rows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cum.</td>${cumCells}</tr>`;
+
+  const streamTotal = bucketProj.yearTotals.reduce((s, y) => s + y.annual, 0);
+  const totalLoans = bucketProj.cohorts.reduce((s, c) => s + c.numLoans, 0);
+  const splitDesc = feeInfo.method === 'essex_split'
+    ? `${(feeInfo.matthewsPct * 100).toFixed(0)}% Essex split → ${fmtBps(feeInfo.matthewsBps)}`
+    : `Flat ${fmtBps(feeInfo.matthewsBps)}`;
+
+  return `
+    <div class="stream-grid ${cssClass}">
+      <h4>${label}</h4>
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">
+        Avg loan: <strong>${loanSizeLabel}</strong> &middot; ${splitDesc} &middot; ${totalLoans} total loans &middot; Stream total: <strong>${fmt(streamTotal)}</strong>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-bottom:2px;">Per-loan annual fee (your share):</div>
+      <div class="fee-schedule">${feeScheduleItems}</div>
+      <div class="table-wrap"><table class="stack-table">
+        <thead><tr><th style="text-align:left">Cohort</th>${headers.join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+function renderStackTable(containerId, proj, viewLabel) {
+  const div = document.getElementById(containerId);
+
+  if (proj.isDualBucket) {
+    // === TWO INDEPENDENT PARALLEL STREAM GRIDS + BLENDED ===
+    const totalYears = proj.totalYears;
+
+    // Build each bucket's stream grid independently
+    const b1HTML = buildStreamGridHTML(
+      proj.bucket1, totalYears,
+      'Stream 1: Loans ≤ $5M', 'stream-b1',
+      fmt(proj.b1LoanSize),
+      proj.bucket1 ? proj.bucket1.fees.feeInfo : null
+    );
+    const b2HTML = buildStreamGridHTML(
+      proj.bucket2, totalYears,
+      'Stream 2: Loans > $5M', 'stream-b2',
+      fmt(proj.b2LoanSize),
+      proj.bucket2 ? proj.bucket2.fees.feeInfo : null
+    );
+
+    // Build blended combined grid
+    const headers = [];
+    for (let cy = 1; cy <= totalYears; cy++) headers.push(`<th>Yr ${cy}</th>`);
+
+    let blendedRows = '';
+    // B1 subtotal row
+    let b1Cells = '', b2Cells = '', totalCells = '', cumCells = '';
+    let cum = 0;
+    for (let cy = 1; cy <= totalYears; cy++) {
+      const yt = proj.yearTotals.find(y => y.year === cy);
+      const b1 = yt ? (yt.b1Annual || 0) : 0;
+      const b2 = yt ? (yt.b2Annual || 0) : 0;
+      const total = yt ? yt.annual : 0;
+      cum += total;
+      b1Cells += `<td style="color:var(--accent);font-weight:600;">${fmtD(b1, 0)}</td>`;
+      b2Cells += `<td style="color:var(--success);font-weight:600;">${fmtD(b2, 0)}</td>`;
+      totalCells += `<td>${fmtD(total, 0)}</td>`;
+      cumCells += `<td>${fmtD(cum, 0)}</td>`;
+    }
+    blendedRows += `<tr><td style="text-align:left;font-weight:600;color:var(--accent);">≤$5M Stream</td>${b1Cells}</tr>`;
+    blendedRows += `<tr><td style="text-align:left;font-weight:600;color:var(--success);">>$5M Stream</td>${b2Cells}</tr>`;
+    blendedRows += `<tr class="total-row"><td style="text-align:left">Blended ${viewLabel} Income</td>${totalCells}</tr>`;
+    blendedRows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cumulative</td>${cumCells}</tr>`;
+
+    const totalBlended = proj.yearTotals.reduce((s, y) => s + y.annual, 0);
+
+    div.innerHTML = `
+      <h3>Parallel Stream Projection (${viewLabel}'s 50% Share)</h3>
+      <div class="note-box">Each loan size bucket runs as an independent stacking stream with its own fee split. Streams are then combined into a blended total. This matches the Projection tab layout in the spreadsheet.</div>
+      <div class="stream-grids">
+        ${b1HTML}
+        ${b2HTML}
+      </div>
+      <div class="blended-grid">
+        <h4>Combined Blended Projection — Total: ${fmt(totalBlended)}</h4>
+        <div class="table-wrap"><table class="stack-table">
+          <thead><tr><th style="text-align:left">Stream</th>${headers.join('')}</tr></thead>
+          <tbody>${blendedRows}</tbody>
+        </table></div>
+      </div>
+    `;
+
+  } else {
+    // Single stream: original layout
+    const headers = proj.yearTotals.map(y => `<th>Year ${y.year}</th>`).join('');
+    let rows = '';
+    proj.cohorts.forEach(c => {
+      if (c.numLoans === 0) return;
+      let cells = '';
+      for (let cy = 1; cy <= proj.totalYears; cy++) {
+        const val = c.yearlyRevenue[cy];
+        cells += val ? `<td class="cohort">${fmtD(val, 0)}</td>` : `<td class="empty-cell">—</td>`;
+      }
+      rows += `<tr><td style="text-align:left;font-weight:600;">Year ${c.origYear} (${c.numLoans} loans)</td>${cells}</tr>`;
+    });
+
+    let totalCells = proj.yearTotals.map(y => `<td>${fmtD(y.annual, 0)}</td>`).join('');
+    rows += `<tr class="total-row"><td style="text-align:left">Total ${viewLabel} Income</td>${totalCells}</tr>`;
+
+    let cumCells = proj.yearTotals.map(y => `<td>${fmtD(y.cumulative, 0)}</td>`).join('');
+    rows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cumulative</td>${cumCells}</tr>`;
+
+    div.innerHTML = `
+      <h3>Stacking Revenue Table (${viewLabel}'s 50% Share)</h3>
+      <div class="note-box">Each row is a year's origination cohort. Fees decline as loans amortize over their term, then drop off when the term expires. New cohorts stack on top, building cumulative servicing income.</div>
+      <div class="table-wrap"><table class="stack-table">
+        <thead><tr><th style="text-align:left">Cohort</th>${headers}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    `;
+  }
+}
+
+function renderDetailTable(containerId, proj) {
+  const div = document.getElementById(containerId);
+  if (!div) return;
+
+  if (proj.isDualBucket) {
+    // Per-bucket economics summary
+    const b1Info = proj.bucket1 ? proj.bucket1.fees.feeInfo : null;
+    const b2Info = proj.bucket2 ? proj.bucket2.fees.feeInfo : null;
+    const b1Total = proj.bucket1 ? proj.bucket1.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const b2Total = proj.bucket2 ? proj.bucket2.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const blendedTotal = b1Total + b2Total;
+
+    let economicsHTML = `
+      <div class="results-grid" style="margin:12px 0;">
+        <div class="result-box" style="border-left:3px solid var(--accent);">
+          <div class="label">≤$5M Stream</div>
+          <div class="value" style="font-size:16px;">${fmt(b1Total)}</div>
+          <div class="sub">${proj.totalB1Loans} loans &middot; ${fmt(proj.b1LoanSize)} avg &middot; ${b1Info ? fmtBps(b1Info.matthewsBps) : '—'} Matthews</div>
+        </div>
+        <div class="result-box" style="border-left:3px solid var(--success);">
+          <div class="label">>$5M Stream</div>
+          <div class="value" style="font-size:16px;">${fmt(b2Total)}</div>
+          <div class="sub">${proj.totalB2Loans} loans &middot; ${fmt(proj.b2LoanSize)} avg &middot; ${b2Info ? fmtBps(b2Info.matthewsBps) : '—'} Matthews</div>
+        </div>
+        <div class="result-box" style="border-left:3px solid var(--primary);">
+          <div class="label">≤$5M Share of Total</div>
+          <div class="value" style="font-size:16px;">${blendedTotal > 0 ? (b1Total / blendedTotal * 100).toFixed(1) : 0}%</div>
+          <div class="sub">By revenue</div>
+        </div>
+        <div class="result-box" style="border-left:3px solid var(--primary);">
+          <div class="label">>$5M Share of Total</div>
+          <div class="value" style="font-size:16px;">${blendedTotal > 0 ? (b2Total / blendedTotal * 100).toFixed(1) : 0}%</div>
+          <div class="sub">By revenue</div>
+        </div>
+      </div>
+    `;
+
+    // Year-by-year table
+    let rows = proj.yearTotals.map(y => {
+      const b1Active = proj.bucket1 ? proj.bucket1.cohorts.reduce((s,c) => s + (c.yearlyRevenue[y.year] ? c.numLoans : 0), 0) : 0;
+      const b2Active = proj.bucket2 ? proj.bucket2.cohorts.reduce((s,c) => s + (c.yearlyRevenue[y.year] ? c.numLoans : 0), 0) : 0;
+      const b1Ann = y.b1Annual || 0;
+      const b2Ann = y.b2Annual || 0;
+      return `<tr>
+        <td style="text-align:left">Year ${y.year}</td>
+        <td>${b1Active}</td>
+        <td style="color:var(--accent);font-weight:600;">${fmtD(b1Ann, 0)}</td>
+        <td>${b2Active}</td>
+        <td style="color:var(--success);font-weight:600;">${fmtD(b2Ann, 0)}</td>
+        <td style="font-weight:700;">${fmtD(y.annual, 0)}</td>
+        <td>${fmtD(y.cumulative, 0)}</td>
+      </tr>`;
+    }).join('');
+
+    div.innerHTML = `<h3>Year-by-Year Blended Summary</h3>
+      ${economicsHTML}
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th style="text-align:left">Year</th>
+          <th style="color:var(--accent);">≤$5M Active</th>
+          <th style="color:var(--accent);">≤$5M Income</th>
+          <th style="color:var(--success);">>$5M Active</th>
+          <th style="color:var(--success);">>$5M Income</th>
+          <th>Blended</th>
+          <th>Cumulative</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  } else {
+    let rows = proj.yearTotals.map(y => {
+      const activeLoans = proj.cohorts.reduce((s, c) => {
+        return s + (c.yearlyRevenue[y.year] ? c.numLoans : 0);
+      }, 0);
+      return `<tr>
+        <td style="text-align:left">Year ${y.year}</td>
+        <td>${activeLoans}</td>
+        <td>${fmtD(y.annual, 2)}</td>
+        <td>${fmtD(y.cumulative, 2)}</td>
+      </tr>`;
+    }).join('');
+
+    div.innerHTML = `<h3>Year-by-Year Summary</h3>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th style="text-align:left">Year</th>
+          <th>Active Loans</th>
+          <th>Annual Agent Income</th>
+          <th>Cumulative Agent Income</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  }
+}
+
+// ===========================
+// COMPARE TAB
+// ===========================
+function renderCompareTab() {
+  const listDiv = document.getElementById('scenarioListCompare');
+  const resultsDiv = document.getElementById('compareResults');
+
+  if (scenarios.length === 0) {
+    listDiv.innerHTML = `<div class="empty-state">
+      <h3>No scenarios saved</h3>
+      <p>Go to the Fee Calculator tab, calculate a loan, and click "Save Scenario" to add it here.</p>
+    </div>`;
+    resultsDiv.innerHTML = '';
+    return;
+  }
+
+  listDiv.innerHTML = `<div class="scenario-list">
+    ${scenarios.map((s,i) => `
+      <div class="scenario-tag" style="background:${s.color}15;">
+        <span class="color-dot" style="background:${s.color}"></span>
+        ${s.name}
+        <span class="remove" onclick="removeScenario(${i})">&times;</span>
+      </div>
+    `).join('')}
+  </div>`;
+
+  const colClass = scenarios.length <= 2 ? 'cols-2' : 'cols-3';
+
+  let cards = scenarios.map(s => {
+    const d = s.data;
+    const r = d.result;
+    const lender = LENDERS[d.lenderId || 'symetra'];
+    return `<div class="compare-card" style="border-color:${s.color}40;">
+      <div class="compare-header">
+        <span class="color-dot" style="background:${s.color}"></span>
+        <h3>${s.name}</h3>
+      </div>
+      <div class="compare-metric"><span class="label">Lender</span><span class="val">${lender.name}</span></div>
+      <div class="compare-metric"><span class="label">Loan Size</span><span class="val">${fmt(d.loanSize)}</span></div>
+      <div class="compare-metric"><span class="label">Rate</span><span class="val">${(d.rate*100).toFixed(2)}%</span></div>
+      <div class="compare-metric"><span class="label">Term / Amort</span><span class="val">${d.termYears}yr / ${d.amortYears}yr</span></div>
+      <div class="compare-metric"><span class="label">Matthews Rate</span><span class="val">${fmtBps(r.matthewsBps)} (${fmtPct(r.matthewsPct)})</span></div>
+      <div class="compare-metric"><span class="label">Total Service Fee</span><span class="val">${fmtD(r.totalServiceFee,0)}</span></div>
+      <div class="compare-metric"><span class="label">Matthews Total</span><span class="val">${fmtD(r.totalMatthews,0)}</span></div>
+      <div class="compare-metric"><span class="label">Company Share</span><span class="val">${fmtD(r.totalCompany,0)}</span></div>
+      <div class="compare-metric"><span class="label">Agent Share</span><span class="val" style="color:var(--agent-color)">${fmtD(r.totalAgent,0)}</span></div>
+    </div>`;
+  }).join('');
+
+  resultsDiv.innerHTML = `<div class="card">
+    <h2>Side-by-Side Comparison</h2>
+    <div class="compare-grid ${colClass}">${cards}</div>
+  </div>`;
+
+  if (scenarios.length >= 2) {
+    resultsDiv.innerHTML += `<div class="card"><h2>Annual Agent Income by Scenario</h2><div class="chart-container"><canvas id="compareChart"></canvas></div></div>`;
+    setTimeout(() => {
+      const ctx = document.getElementById('compareChart').getContext('2d');
+      const maxYears = Math.max(...scenarios.map(s => Object.keys(s.data.result.yearly).length));
+      const labels = Array.from({length:maxYears},(_,i)=>'Year '+(i+1));
+      const datasets = scenarios.map(s => ({
+        label: s.name,
+        data: labels.map((_,i) => {
+          const y = s.data.result.yearly[i+1];
+          return y ? y.agent : 0;
+        }),
+        borderColor: s.color,
+        backgroundColor: s.color + '30',
+        borderWidth: 2, fill: false, tension: 0.1
+      }));
+      new Chart(ctx, {
+        type:'line', data:{labels,datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtD(ctx.parsed.y,0)}}},
+          scales:{y:{beginAtZero:true,ticks:{callback:v=>fmt(v)}}}
+        }
+      });
+    }, 100);
+  }
+}
+
+function removeScenario(idx) {
+  scenarios.splice(idx, 1);
+  renderCompareTab();
+}
+
+// ===========================
+// REFERENCE TAB
+// ===========================
+function renderReference() {
+  const div = document.getElementById('referenceContent');
+  div.innerHTML = `
+    <div class="card" style="box-shadow:none;padding:0;">
+
+      <h3>All Lender Fee Structures</h3>
+      <div class="info-box">
+        Matthews works with 6 lenders across 3 categories: Agency, DUS, and Insurance Company.
+        Each has a unique fee structure. Matthews' share is always split <strong>50/50 between the company and the originating agent</strong>.
+      </div>
+
+      <!-- Symetra -->
+      <h3 style="margin-top:20px;"><span class="tag tag-insurance">Insurance</span> Symetra (via Essex Financial Services)</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Base fee: <strong>10 bps (0.10%)</strong> of UPB. Matthews' share via Essex split depends on loan size and aggregate portfolio:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Condition</th>
+          <th>Essex Retains</th>
+          <th>Matthews Receives</th>
+          <th>Effective Rate</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">Loan &le; $5M (any UPB)</td><td>90%</td><td>10%</td><td>1.0 bps</td></tr>
+          <tr><td style="text-align:left">Loan > $5M, Agg. UPB &le; $250M</td><td>75%</td><td>25%</td><td>2.5 bps</td></tr>
+          <tr><td style="text-align:left">Loan > $5M, Agg. UPB > $250M</td><td>65%</td><td>35%</td><td>3.5 bps</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Assurity -->
+      <h3 style="margin-top:20px;"><span class="tag tag-insurance">Insurance</span> Assurity</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Flat <strong>12.5 bps (0.125%)</strong> of outstanding balance. No Essex partnership — Matthews receives the full amount.
+      </p>
+
+      <!-- Ready Capital -->
+      <h3 style="margin-top:20px;"><span class="tag tag-agency">Agency</span> Ready Capital</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Freddie SBL program. Min volume: $15M. Fee = <strong>lesser of X bps or Y% of Freddie Mac servicing fee</strong>:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Annual Volume</th>
+          <th>BPS Option</th>
+          <th>% of Freddie Fee Option</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">$15M – $30M</td><td>5 bps</td><td>12%</td></tr>
+          <tr><td style="text-align:left">$30M – $50M</td><td>6 bps</td><td>14%</td></tr>
+          <tr><td style="text-align:left">$50M – $100M</td><td>7 bps</td><td>16%</td></tr>
+          <tr><td style="text-align:left">$100M+</td><td>8 bps</td><td>18%</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Lument -->
+      <h3 style="margin-top:20px;"><span class="tag tag-dus">DUS</span> Lument</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Percentage of servicing fee, varies by program and annual volume:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Annual Volume</th>
+          <th>Freddie SBL</th>
+          <th>Fannie SBL</th>
+          <th>Fannie Conventional</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">$0 – $50M</td><td>5%</td><td>5%</td><td>5%</td></tr>
+          <tr><td style="text-align:left">$50M – $100M</td><td>8%</td><td>8%</td><td>Lesser of 10% or 5 bps</td></tr>
+          <tr><td style="text-align:left">$100M+</td><td>10%</td><td>10%</td><td>Lesser of 10% or 5 bps</td></tr>
+        </tbody>
+      </table>
+
+      <!-- NewPoint -->
+      <h3 style="margin-top:20px;"><span class="tag tag-dus">DUS</span> NewPoint Real Estate Capital</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Programs: Freddie Mac, Fannie Mae, FHA. Min volume: $50M. Percentage of servicing fees:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Annual Volume</th>
+          <th>Matthews %</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">$50M – $100M</td><td>5%</td></tr>
+          <tr><td style="text-align:left">$100M – $200M</td><td>10%</td></tr>
+          <tr><td style="text-align:left">$200M+</td><td>15%</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Regions -->
+      <h3 style="margin-top:20px;"><span class="tag tag-dus">DUS</span> Regions</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Programs: Freddie SBL, Fannie Mae. Percentage of servicing strip:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Condition</th>
+          <th>Matthews %</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">Base rate</td><td>7.5%</td></tr>
+          <tr><td style="text-align:left">> $25M qualifying loans/year</td><td>10%</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:24px;">Company / Agent Split</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        For all lenders, Matthews' share of the servicing fee is split 50/50 between the company and the originating agent.
+      </p>
+
+      <h3 style="margin-top:20px;">Symetra Fee Waterfall Examples</h3>
+      <div class="fee-flow" style="background:white;border:1px solid var(--border);">
+        <div class="flow-box flow-lender">$5M Loan<br>10 bps = $5,000/yr</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-essex">Essex keeps 90%<br>$4,500/yr</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-matthews">Matthews gets 10%<br>$500/yr</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-company">Company<br>$250/yr</div>
+        <span class="flow-arrow">+</span>
+        <div class="flow-box flow-agent">Agent<br>$250/yr</div>
+      </div>
+      <div class="fee-flow" style="background:white;border:1px solid var(--border);margin-top:8px;">
+        <div class="flow-box flow-lender">$10M Loan<br>10 bps = $10,000/yr</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-essex">Essex keeps 75%<br>$7,500/yr</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-matthews">Matthews gets 25%<br>$2,500/yr</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box flow-company">Company<br>$1,250/yr</div>
+        <span class="flow-arrow">+</span>
+        <div class="flow-box flow-agent">Agent<br>$1,250/yr</div>
+      </div>
+
+      <h3 style="margin-top:20px;">Key Mechanics</h3>
+      <ul style="font-size:13px;color:var(--text);padding-left:20px;line-height:1.8;">
+        <li>Service fee is calculated monthly on the <strong>beginning balance</strong> of each month</li>
+        <li>As the loan amortizes, the UPB declines, so the fee amount decreases each month</li>
+        <li>Fees are paid over the <strong>loan term</strong> (typically 5 years), not the full amortization period</li>
+        <li>The stacking effect: each year's new originations add to the cumulative fee stream from prior years</li>
+        <li>Peak revenue is reached when all cohort years are simultaneously active</li>
+        <li>Revenue declines as older cohorts reach term maturity and drop off</li>
+        <li><strong>Insurance company lenders</strong> (Symetra, Assurity): fee based on bps of UPB</li>
+        <li><strong>Agency/DUS lenders</strong> (Ready Capital, Lument, NewPoint, Regions): fee based on % of lender's servicing fee, tiered by volume</li>
+      </ul>
+    </div>
+  `;
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize lender dropdowns for all tabs
+  onLenderChange('calc');
+  onLenderChange('agent');
+  onLenderChange('comp');
+  renderReference();
+});
+</script>
+
+</body>
+</html>
