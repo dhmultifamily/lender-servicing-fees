@@ -370,7 +370,7 @@
 
 <header>
   <h1>Matthews Servicing Fee Calculator</h1>
-  <p>Servicing fee projections with Essex partnership split &amp; company/agent views</p>
+  <p>Servicing fee projections across all lenders &amp; company/agent views</p>
 </header>
 
 <div class="container">
@@ -387,10 +387,8 @@
 
     <div class="card">
       <h2>How Servicing Fees Work</h2>
-      <div class="fee-flow">
-        <div class="flow-box flow-lender">Lender pays<br>10 bps on UPB</div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="flow-box flow-essex">Essex takes their share<br>(based on loan size)</div>
+      <div id="feeFlowDiagram" class="fee-flow">
+        <div class="flow-box flow-lender">Lender pays<br>servicing fee on UPB</div>
         <span class="flow-arrow">&rarr;</span>
         <div class="flow-box flow-matthews">Matthews receives<br>its split</div>
         <span class="flow-arrow">&rarr;</span>
@@ -398,12 +396,8 @@
         <span class="flow-arrow">+</span>
         <div class="flow-box flow-agent">Agent 50%</div>
       </div>
-      <div class="info-box">
-        The servicing fee is <strong>10 basis points (0.10%)</strong> of the unpaid principal balance, paid monthly over the loan term.
-        Matthews' share of this fee depends on loan size via the Essex Financial Services partnership:
-        <strong>loans up to $5M &rarr; Matthews gets 10%</strong>;
-        <strong>loans over $5M &rarr; Matthews gets 25%</strong>.
-        Matthews' share is then split <strong>50/50 between the company and the originating agent</strong>.
+      <div class="info-box" id="feeFlowInfo">
+        Select a lender below to see how their specific fee structure works. Matthews' share is then split <strong>50/50 between the company and the originating agent</strong>.
       </div>
     </div>
 
@@ -411,9 +405,25 @@
       <h2>Single Loan Calculator</h2>
       <div class="form-grid">
         <div class="form-group">
+          <label>Lender</label>
+          <select id="calcLender" onchange="onLenderChange('calc')">
+            <option value="symetra">Symetra (Essex)</option>
+            <option value="assurity">Assurity</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+          </select>
+        </div>
+        <div class="form-group" id="calcProgramGroup">
+          <label>Program</label>
+          <select id="calcProgram" onchange="onProgramChange('calc')">
+          </select>
+        </div>
+        <div class="form-group">
           <label>Loan Balance ($)</label>
           <input type="text" id="calcLoanSize" placeholder="e.g. 5,000,000" value="5,000,000" oninput="formatCurrency(this)">
-          <div class="hint" id="loanSizeHint">Affects Essex split tier</div>
+          <div class="hint" id="loanSizeHint">Affects fee calculation</div>
         </div>
         <div class="form-group">
           <label>Interest Rate (%)</label>
@@ -426,6 +436,21 @@
         <div class="form-group">
           <label>Loan Term (Years)</label>
           <input type="number" id="calcTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group" id="calcVolumeGroup">
+          <label>Annual Volume ($M)</label>
+          <input type="number" id="calcAnnualVolume" value="50" min="0" max="10000" step="5">
+          <div class="hint">Used for volume-based fee tiers</div>
+        </div>
+        <div class="form-group" id="calcAggUPBGroup" style="display:none;">
+          <label>Aggregate UPB ($M)</label>
+          <input type="number" id="calcAggUPB" value="100" min="0" max="10000" step="10">
+          <div class="hint">Total serviced portfolio for Essex tier</div>
+        </div>
+        <div class="form-group" id="calcFreddieFeeBpsGroup" style="display:none;">
+          <label>Freddie Svc Fee (bps)</label>
+          <input type="number" id="calcFreddieFeeBps" value="44" min="0" max="200" step="1">
+          <div class="hint">Freddie Mac servicing fee in bps</div>
         </div>
         <div class="form-group">
           <label>Scenario Name</label>
@@ -461,12 +486,28 @@
         the cumulative stream from prior years. All numbers shown are <strong>your 50% agent share</strong>.
       </p>
 
-      <h3>Loan Parameters</h3>
+      <h3>Lender &amp; Loan Parameters</h3>
       <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="agentLender" onchange="onLenderChange('agent')">
+            <option value="symetra">Symetra (Essex)</option>
+            <option value="assurity">Assurity</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+          </select>
+        </div>
+        <div class="form-group" id="agentProgramGroup">
+          <label>Program</label>
+          <select id="agentProgram" onchange="onProgramChange('agent')">
+          </select>
+        </div>
         <div class="form-group">
           <label>Avg Loan Size ($)</label>
           <input type="text" id="agentLoanSize" value="5,000,000" oninput="formatCurrency(this)">
-          <div class="hint">Determines Essex split tier</div>
+          <div class="hint">Determines fee tier</div>
         </div>
         <div class="form-group">
           <label>Interest Rate (%)</label>
@@ -479,6 +520,21 @@
         <div class="form-group">
           <label>Loan Term (Years)</label>
           <input type="number" id="agentTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group" id="agentVolumeGroup">
+          <label>Annual Volume ($M)</label>
+          <input type="number" id="agentAnnualVolume" value="50" min="0" max="10000" step="5">
+          <div class="hint">Used for volume-based fee tiers</div>
+        </div>
+        <div class="form-group" id="agentAggUPBGroup" style="display:none;">
+          <label>Aggregate UPB ($M)</label>
+          <input type="number" id="agentAggUPB" value="100" min="0" max="10000" step="10">
+          <div class="hint">Total serviced portfolio for Essex tier</div>
+        </div>
+        <div class="form-group" id="agentFreddieFeeBpsGroup" style="display:none;">
+          <label>Freddie Svc Fee (bps)</label>
+          <input type="number" id="agentFreddieFeeBps" value="44" min="0" max="200" step="1">
+          <div class="hint">Freddie Mac servicing fee in bps</div>
         </div>
       </div>
 
@@ -529,8 +585,24 @@
         Enter total firm-wide origination assumptions.
       </p>
 
-      <h3>Firm-Wide Loan Parameters</h3>
+      <h3>Lender &amp; Firm-Wide Loan Parameters</h3>
       <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Lender</label>
+          <select id="compLender" onchange="onLenderChange('comp')">
+            <option value="symetra">Symetra (Essex)</option>
+            <option value="assurity">Assurity</option>
+            <option value="ready_capital">Ready Capital</option>
+            <option value="lument">Lument</option>
+            <option value="newpoint">NewPoint Real Estate Capital</option>
+            <option value="regions">Regions</option>
+          </select>
+        </div>
+        <div class="form-group" id="compProgramGroup">
+          <label>Program</label>
+          <select id="compProgram" onchange="onProgramChange('comp')">
+          </select>
+        </div>
         <div class="form-group">
           <label>Avg Loan Size ($)</label>
           <input type="text" id="compLoanSize" value="5,000,000" oninput="formatCurrency(this)">
@@ -546,6 +618,21 @@
         <div class="form-group">
           <label>Loan Term (Years)</label>
           <input type="number" id="compTerm" value="5" min="1" max="30">
+        </div>
+        <div class="form-group" id="compVolumeGroup">
+          <label>Annual Volume ($M)</label>
+          <input type="number" id="compAnnualVolume" value="200" min="0" max="10000" step="5">
+          <div class="hint">Used for volume-based fee tiers</div>
+        </div>
+        <div class="form-group" id="compAggUPBGroup" style="display:none;">
+          <label>Aggregate UPB ($M)</label>
+          <input type="number" id="compAggUPB" value="500" min="0" max="10000" step="10">
+          <div class="hint">Total serviced portfolio for Essex tier</div>
+        </div>
+        <div class="form-group" id="compFreddieFeeBpsGroup" style="display:none;">
+          <label>Freddie Svc Fee (bps)</label>
+          <input type="number" id="compFreddieFeeBps" value="44" min="0" max="200" step="1">
+          <div class="hint">Freddie Mac servicing fee in bps</div>
         </div>
       </div>
 
@@ -609,17 +696,114 @@
 
 <script>
 // ===========================
-// CONSTANTS — matches the spreadsheet exactly
+// LENDER DATA MODEL — all 6 lenders with exact fee structures from source files
 // ===========================
-const SERVICE_FEE_BPS = 10; // 10 bps = 0.001
+const LENDERS = {
+  symetra: {
+    name: 'Symetra',
+    type: 'Insurance Company',
+    typeTag: 'tag-insurance',
+    partner: 'Essex Financial Services',
+    minVolume: null,
+    programs: ['Symetra Life'],
+    feeCalcType: 'bps_with_essex_split',
+    baseBps: 10, // 10 bps on UPB
+    // Essex split: Matthews' % depends on individual loan size + aggregate UPB
+    essexTiers: [
+      { maxLoan: 5000000, maxAggUPB: Infinity, matthewsPct: 0.10, label: 'Loan ≤$5M → Matthews 10%' },
+      { maxLoan: Infinity, maxAggUPB: 250000000, matthewsPct: 0.25, label: 'Loan >$5M, UPB ≤$250M → Matthews 25%' },
+      { maxLoan: Infinity, maxAggUPB: Infinity, matthewsPct: 0.35, label: 'Loan >$5M, UPB >$250M → Matthews 35%' }
+    ],
+    description: '10 bps of UPB, split with Essex Financial Services based on loan size and aggregate portfolio.'
+  },
+  assurity: {
+    name: 'Assurity',
+    type: 'Insurance Company',
+    typeTag: 'tag-insurance',
+    partner: null,
+    minVolume: null,
+    programs: ['Assurity Life'],
+    feeCalcType: 'flat_bps',
+    baseBps: 12.5, // 12.5 bps flat — no Essex split
+    description: 'Flat 12.5 bps (0.125%) of outstanding balance. No Essex partnership — Matthews receives the full amount.'
+  },
+  ready_capital: {
+    name: 'Ready Capital',
+    type: 'Agency',
+    typeTag: 'tag-agency',
+    partner: null,
+    minVolume: 15, // $15M
+    programs: ['Freddie SBL'],
+    feeCalcType: 'lesser_of_bps_or_pct',
+    // Tiers: lesser of X bps OR Y% of Freddie Mac servicing fee
+    tiers: [
+      { minVol: 15, maxVol: 30, bps: 5, pct: 0.12, label: '$15M–$30M: lesser of 5 bps or 12%' },
+      { minVol: 30, maxVol: 50, bps: 6, pct: 0.14, label: '$30M–$50M: lesser of 6 bps or 14%' },
+      { minVol: 50, maxVol: 100, bps: 7, pct: 0.16, label: '$50M–$100M: lesser of 7 bps or 16%' },
+      { minVol: 100, maxVol: Infinity, bps: 8, pct: 0.18, label: '$100M+: lesser of 8 bps or 18%' }
+    ],
+    description: 'Lesser of X bps or Y% of Freddie Mac servicing fee, tiered by annual origination volume.'
+  },
+  lument: {
+    name: 'Lument',
+    type: 'DUS',
+    typeTag: 'tag-dus',
+    partner: null,
+    minVolume: null,
+    programs: ['Freddie SBL', 'Fannie SBL', 'Fannie Conventional'],
+    feeCalcType: 'pct_of_fee_by_program',
+    // Tiers vary by program AND volume
+    tiers: {
+      'Freddie SBL': [
+        { minVol: 0, maxVol: 50, pct: 0.05, label: '$0–$50M: 5%' },
+        { minVol: 50, maxVol: 100, pct: 0.08, label: '$50M–$100M: 8%' },
+        { minVol: 100, maxVol: Infinity, pct: 0.10, label: '$100M+: 10%' }
+      ],
+      'Fannie SBL': [
+        { minVol: 0, maxVol: 50, pct: 0.05, label: '$0–$50M: 5%' },
+        { minVol: 50, maxVol: 100, pct: 0.08, label: '$50M–$100M: 8%' },
+        { minVol: 100, maxVol: Infinity, pct: 0.10, label: '$100M+: 10%' }
+      ],
+      'Fannie Conventional': [
+        { minVol: 0, maxVol: 50, pct: 0.05, useLesserOf: false, label: '$0–$50M: 5%' },
+        { minVol: 50, maxVol: 100, pct: 0.10, useLesserOf: true, lesserBps: 5, label: '$50M–$100M: lesser of 10% or 5 bps' },
+        { minVol: 100, maxVol: Infinity, pct: 0.10, useLesserOf: true, lesserBps: 5, label: '$100M+: lesser of 10% or 5 bps' }
+      ]
+    },
+    description: 'Percentage of servicing fee, varies by program (Freddie SBL, Fannie SBL, Fannie Conventional) and annual volume.'
+  },
+  newpoint: {
+    name: 'NewPoint Real Estate Capital',
+    type: 'DUS',
+    typeTag: 'tag-dus',
+    partner: null,
+    minVolume: 50, // $50M
+    programs: ['Freddie Mac', 'Fannie Mae', 'FHA'],
+    feeCalcType: 'pct_of_fee',
+    tiers: [
+      { minVol: 50, maxVol: 100, pct: 0.05, label: '$50M–$100M: 5%' },
+      { minVol: 100, maxVol: 200, pct: 0.10, label: '$100M–$200M: 10%' },
+      { minVol: 200, maxVol: Infinity, pct: 0.15, label: '$200M+: 15%' }
+    ],
+    description: 'Percentage of servicing fees, tiered by annual origination volume. Minimum $50M annual volume.'
+  },
+  regions: {
+    name: 'Regions',
+    type: 'DUS',
+    typeTag: 'tag-dus',
+    partner: null,
+    minVolume: null,
+    programs: ['Freddie SBL', 'Fannie Mae'],
+    feeCalcType: 'pct_of_fee_servicing_only',
+    basePct: 0.075, // 7.5%
+    bonusPct: 0.10,  // 10% if >$25M qualifying
+    bonusThreshold: 25, // $25M
+    description: '7.5% of servicing strip. Increases to 10% if annual qualifying loan volume exceeds $25M.'
+  }
+};
 
-// Essex split: Matthews' share of the servicing fee depends on individual loan size
-// Loan ≤ $5M → Matthews gets 10% of the 10bps service fee
-// Loan > $5M → Matthews gets 25% of the 10bps service fee
-// Then Matthews' share is split 50/50 between company and agent
-function getMatthewsSplitPct(loanSize) {
-  return loanSize <= 5000000 ? 0.10 : 0.25;
-}
+// Default servicing fee in bps for agency/DUS lenders (used when we need a base fee to take a % of)
+const DEFAULT_AGENCY_SVC_FEE_BPS = 44; // typical Freddie/Fannie servicing fee
 
 // ===========================
 // STATE
@@ -669,6 +853,105 @@ function switchTab(name) {
 }
 
 // ===========================
+// LENDER UI MANAGEMENT
+// ===========================
+function onLenderChange(prefix) {
+  const lenderId = document.getElementById(prefix + 'Lender').value;
+  const lender = LENDERS[lenderId];
+
+  // Populate programs dropdown
+  const progSelect = document.getElementById(prefix + 'Program');
+  const progGroup = document.getElementById(prefix + 'ProgramGroup');
+  progSelect.innerHTML = lender.programs.map(p => `<option value="${p}">${p}</option>`).join('');
+  progGroup.style.display = lender.programs.length > 1 ? '' : 'none';
+
+  // Show/hide volume input (needed for tiered lenders)
+  const volGroup = document.getElementById(prefix + 'VolumeGroup');
+  const needsVolume = ['lesser_of_bps_or_pct','pct_of_fee_by_program','pct_of_fee','pct_of_fee_servicing_only'].includes(lender.feeCalcType);
+  if (volGroup) volGroup.style.display = needsVolume ? '' : 'none';
+
+  // Show/hide aggregate UPB input (Symetra only)
+  const aggGroup = document.getElementById(prefix + 'AggUPBGroup');
+  if (aggGroup) aggGroup.style.display = lenderId === 'symetra' ? '' : 'none';
+
+  // Show/hide Freddie fee bps input (Ready Capital only)
+  const freddieGroup = document.getElementById(prefix + 'FreddieFeeBpsGroup');
+  if (freddieGroup) freddieGroup.style.display = lenderId === 'ready_capital' ? '' : 'none';
+
+  // Update fee flow diagram if on calc tab
+  if (prefix === 'calc') updateFeeFlowDiagram(lenderId);
+
+  // Update loan size hint
+  const hint = document.getElementById(prefix === 'calc' ? 'loanSizeHint' : null);
+  if (hint) {
+    if (lenderId === 'symetra') hint.textContent = 'Affects Essex split tier';
+    else hint.textContent = 'Individual loan balance';
+  }
+}
+
+function onProgramChange(prefix) {
+  // Currently programs affect Lument's fee tiers — no additional UI changes needed
+}
+
+function updateFeeFlowDiagram(lenderId) {
+  const lender = LENDERS[lenderId];
+  const diagram = document.getElementById('feeFlowDiagram');
+  const info = document.getElementById('feeFlowInfo');
+
+  if (lender.feeCalcType === 'bps_with_essex_split') {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name} pays<br>${lender.baseBps} bps on UPB</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-essex">Essex takes their share<br>(based on loan size)</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>its split</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    info.innerHTML = `<strong>${lender.name}</strong> servicing fee is <strong>${lender.baseBps} bps (${(lender.baseBps/100).toFixed(3)}%)</strong> of UPB, paid monthly.
+      Matthews' share depends on loan size via Essex Financial Services:
+      <strong>loans &le; $5M &rarr; 10%</strong>, <strong>loans > $5M (UPB &le; $250M) &rarr; 25%</strong>, <strong>loans > $5M (UPB > $250M) &rarr; 35%</strong>.
+      Then split <strong>50/50 company/agent</strong>.`;
+  } else if (lender.feeCalcType === 'flat_bps') {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name} pays<br>${lender.baseBps} bps on UPB</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>full ${lender.baseBps} bps</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    info.innerHTML = `<strong>${lender.name}</strong> pays a flat <strong>${lender.baseBps} bps (${(lender.baseBps/100).toFixed(3)}%)</strong> of UPB.
+      No Essex partnership — Matthews receives the full fee, then split <strong>50/50 company/agent</strong>.`;
+  } else if (lender.feeCalcType === 'lesser_of_bps_or_pct') {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name}<br>Freddie servicing fee</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>lesser of bps or %</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    info.innerHTML = `<strong>${lender.name}</strong>: Matthews receives the <strong>lesser of X bps or Y% of the Freddie Mac servicing fee</strong>,
+      tiered by annual origination volume. Min volume: $${lender.minVolume}M. Then split <strong>50/50 company/agent</strong>.`;
+  } else {
+    diagram.innerHTML = `
+      <div class="flow-box flow-lender">${lender.name}<br>servicing fee</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-matthews">Matthews receives<br>% of svc fee</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-box flow-company">Company 50%</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-box flow-agent">Agent 50%</div>`;
+    let extra = lender.feeCalcType === 'pct_of_fee_servicing_only'
+      ? `Base: <strong>${(lender.basePct*100).toFixed(1)}%</strong> of servicing strip. <strong>${(lender.bonusPct*100)}%</strong> if annual qualifying volume exceeds $${lender.bonusThreshold}M.`
+      : `Percentage of servicing fees, tiered by annual volume.${lender.minVolume ? ' Min volume: $' + lender.minVolume + 'M.' : ''}`;
+    info.innerHTML = `<strong>${lender.name}</strong>: ${extra} Then split <strong>50/50 company/agent</strong>.`;
+  }
+}
+
+// ===========================
 // AMORTIZATION ENGINE
 // Matches the Service Fee Calculator spreadsheet exactly
 // ===========================
@@ -699,19 +982,144 @@ function amortize(balance, annualRate, amortYears, termYears) {
 }
 
 // ===========================
-// SERVICING FEE ENGINE
-// Matches the spreadsheet: 10bps on UPB, split with Essex, then 50/50 company/agent
+// UNIFIED SERVICING FEE ENGINE — handles all 6 lender types
 // ===========================
-function computeServiceFees(schedule, loanSize) {
-  const matthewsPct = getMatthewsSplitPct(loanSize);
+
+// Get Matthews' effective bps for a given lender, loan, and context
+function getMatthewsEffectiveBps(lenderId, loanSize, opts) {
+  const lender = LENDERS[lenderId];
+  opts = opts || {};
+  const annualVolM = opts.annualVolumeM || 50;
+  const aggUPB = opts.aggUPB || 100000000;
+  const program = opts.program || lender.programs[0];
+  const freddieSvcFeeBps = opts.freddieSvcFeeBps || DEFAULT_AGENCY_SVC_FEE_BPS;
+
+  switch (lender.feeCalcType) {
+    case 'bps_with_essex_split': {
+      // Symetra: 10 bps base, split with Essex
+      let matthewsPct = lender.essexTiers[0].matthewsPct; // default 10%
+      for (const tier of lender.essexTiers) {
+        if (loanSize <= tier.maxLoan && aggUPB <= tier.maxAggUPB) {
+          matthewsPct = tier.matthewsPct;
+          break;
+        }
+      }
+      return {
+        totalSvcFeeBps: lender.baseBps,
+        matthewsBps: lender.baseBps * matthewsPct,
+        matthewsPct: matthewsPct,
+        tierLabel: lender.essexTiers.find(t => loanSize <= t.maxLoan && aggUPB <= t.maxAggUPB)?.label || '',
+        method: 'essex_split'
+      };
+    }
+
+    case 'flat_bps': {
+      // Assurity: flat 12.5 bps, Matthews gets 100%
+      return {
+        totalSvcFeeBps: lender.baseBps,
+        matthewsBps: lender.baseBps,
+        matthewsPct: 1.0,
+        tierLabel: `Flat ${lender.baseBps} bps — no split`,
+        method: 'flat_bps'
+      };
+    }
+
+    case 'lesser_of_bps_or_pct': {
+      // Ready Capital: lesser of X bps or Y% of Freddie svc fee
+      const tier = lender.tiers.find(t => annualVolM >= t.minVol && annualVolM < t.maxVol) || lender.tiers[lender.tiers.length - 1];
+      const bpsAmount = tier.bps; // e.g. 5 bps
+      const pctAmount = freddieSvcFeeBps * tier.pct; // e.g. 44 bps * 12% = 5.28 bps
+      const matthewsBps = Math.min(bpsAmount, pctAmount);
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: matthewsBps / freddieSvcFeeBps,
+        tierLabel: tier.label,
+        bpsOption: bpsAmount,
+        pctOption: pctAmount,
+        method: 'lesser_of'
+      };
+    }
+
+    case 'pct_of_fee_by_program': {
+      // Lument: % of servicing fee, varies by program
+      const programTiers = lender.tiers[program] || lender.tiers[lender.programs[0]];
+      const tier = programTiers.find(t => annualVolM >= t.minVol && annualVolM < t.maxVol) || programTiers[programTiers.length - 1];
+
+      let matthewsBps;
+      if (tier.useLesserOf) {
+        // Fannie Conventional at higher volumes: lesser of pct or X bps
+        const pctBps = freddieSvcFeeBps * tier.pct;
+        matthewsBps = Math.min(pctBps, tier.lesserBps);
+      } else {
+        matthewsBps = freddieSvcFeeBps * tier.pct;
+      }
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: matthewsBps / freddieSvcFeeBps,
+        tierLabel: tier.label,
+        method: 'pct_of_fee'
+      };
+    }
+
+    case 'pct_of_fee': {
+      // NewPoint: % of servicing fees by volume
+      const tier = lender.tiers.find(t => annualVolM >= t.minVol && annualVolM < t.maxVol) || lender.tiers[lender.tiers.length - 1];
+      if (!tier || annualVolM < lender.minVolume) {
+        return {
+          totalSvcFeeBps: freddieSvcFeeBps,
+          matthewsBps: 0,
+          matthewsPct: 0,
+          tierLabel: `Below minimum volume ($${lender.minVolume}M)`,
+          method: 'pct_of_fee'
+        };
+      }
+      const matthewsBps = freddieSvcFeeBps * tier.pct;
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: tier.pct,
+        tierLabel: tier.label,
+        method: 'pct_of_fee'
+      };
+    }
+
+    case 'pct_of_fee_servicing_only': {
+      // Regions: % of servicing strip
+      const pct = annualVolM > lender.bonusThreshold ? lender.bonusPct : lender.basePct;
+      const matthewsBps = freddieSvcFeeBps * pct;
+      const label = annualVolM > lender.bonusThreshold
+        ? `${(pct*100)}% (>$${lender.bonusThreshold}M qualifying)`
+        : `${(pct*100).toFixed(1)}% (base rate)`;
+      return {
+        totalSvcFeeBps: freddieSvcFeeBps,
+        matthewsBps: matthewsBps,
+        matthewsPct: pct,
+        tierLabel: label,
+        method: 'pct_of_fee'
+      };
+    }
+
+    default:
+      return { totalSvcFeeBps: 0, matthewsBps: 0, matthewsPct: 0, tierLabel: 'Unknown', method: 'unknown' };
+  }
+}
+
+// Compute service fees for an amortization schedule using the unified lender engine
+function computeServiceFees(schedule, loanSize, lenderId, opts) {
+  const feeInfo = getMatthewsEffectiveBps(lenderId, loanSize, opts);
+  const totalSvcFeeBps = feeInfo.totalSvcFeeBps;
+  const matthewsBps = feeInfo.matthewsBps;
+
   let totalServiceFee = 0, totalMatthews = 0;
   const yearly = {};
 
   schedule.forEach(row => {
-    // Monthly service fee = beginning balance * (10bps / 12)
-    const monthlyServiceFee = row.begBalance * (SERVICE_FEE_BPS / 10000) / 12;
-    // Matthews' share = service fee * split percentage
-    const matthewsFee = monthlyServiceFee * matthewsPct;
+    // Monthly service fee = beginning balance * (totalSvcFeeBps / 10000) / 12
+    const monthlyServiceFee = row.begBalance * (totalSvcFeeBps / 10000) / 12;
+    // Matthews' share = beginning balance * (matthewsBps / 10000) / 12
+    const matthewsFee = row.begBalance * (matthewsBps / 10000) / 12;
 
     row.serviceFee = monthlyServiceFee;
     row.matthewsFee = matthewsFee;
@@ -731,7 +1139,41 @@ function computeServiceFees(schedule, loanSize) {
     schedule, totalServiceFee, totalMatthews,
     totalCompany: totalMatthews * 0.5,
     totalAgent: totalMatthews * 0.5,
-    yearly, matthewsPct, loanSize
+    yearly,
+    matthewsPct: feeInfo.matthewsPct,
+    matthewsBps: feeInfo.matthewsBps,
+    totalSvcFeeBps: totalSvcFeeBps,
+    tierLabel: feeInfo.tierLabel,
+    method: feeInfo.method,
+    feeInfo: feeInfo,
+    loanSize: loanSize,
+    lenderId: lenderId
+  };
+}
+
+// Helper: read common form fields for a prefix
+function readFormInputs(prefix) {
+  const lenderId = document.getElementById(prefix + 'Lender').value;
+  const lender = LENDERS[lenderId];
+  const progEl = document.getElementById(prefix + 'Program');
+  const program = progEl ? progEl.value : lender.programs[0];
+  const loanSize = parseCurrency(document.getElementById(prefix + 'LoanSize').value);
+  const rate = parseFloat(document.getElementById(prefix + 'Rate').value) / 100;
+  const amortYears = parseInt(document.getElementById(prefix + 'Amort').value);
+  const termYears = parseInt(document.getElementById(prefix + 'Term').value);
+
+  const volEl = document.getElementById(prefix + 'AnnualVolume');
+  const annualVolumeM = volEl ? parseFloat(volEl.value) || 50 : 50;
+
+  const aggEl = document.getElementById(prefix + 'AggUPB');
+  const aggUPB = aggEl ? (parseFloat(aggEl.value) || 100) * 1000000 : 100000000;
+
+  const freddieEl = document.getElementById(prefix + 'FreddieFeeBps');
+  const freddieSvcFeeBps = freddieEl ? parseFloat(freddieEl.value) || DEFAULT_AGENCY_SVC_FEE_BPS : DEFAULT_AGENCY_SVC_FEE_BPS;
+
+  return {
+    lenderId, lender, program, loanSize, rate, amortYears, termYears,
+    opts: { annualVolumeM, aggUPB, program, freddieSvcFeeBps }
   };
 }
 
@@ -739,26 +1181,23 @@ function computeServiceFees(schedule, loanSize) {
 // SINGLE LOAN CALCULATOR
 // ===========================
 function calculate() {
-  const loanSize = parseCurrency(document.getElementById('calcLoanSize').value);
-  const rate = parseFloat(document.getElementById('calcRate').value) / 100;
-  const amortYears = parseInt(document.getElementById('calcAmort').value);
-  const termYears = parseInt(document.getElementById('calcTerm').value);
+  const inputs = readFormInputs('calc');
+  const { lenderId, loanSize, rate, amortYears, termYears, opts } = inputs;
 
   if (!loanSize || loanSize <= 0) { alert('Please enter a loan size.'); return; }
 
   const { schedule, monthlyPayment } = amortize(loanSize, rate, amortYears, termYears);
-  const result = computeServiceFees(schedule, loanSize);
+  const result = computeServiceFees(schedule, loanSize, lenderId, opts);
 
-  currentResults = { loanSize, rate, amortYears, termYears, monthlyPayment, result };
+  currentResults = { loanSize, rate, amortYears, termYears, monthlyPayment, result, lenderId };
   renderResults(currentResults);
 }
 
 function renderResults(data) {
-  const { result, loanSize, monthlyPayment, rate, termYears } = data;
+  const { result, loanSize, monthlyPayment, rate, termYears, lenderId } = data;
+  const lender = LENDERS[lenderId];
   const panel = document.getElementById('resultsPanel');
   const content = document.getElementById('resultsContent');
-
-  const essexLabel = loanSize <= 5000000 ? 'Loan &le; $5M: Matthews gets 10%' : 'Loan > $5M: Matthews gets 25%';
 
   let yearlyHtml = '';
   Object.keys(result.yearly).sort((a,b)=>a-b).forEach(y => {
@@ -772,7 +1211,23 @@ function renderResults(data) {
     </tr>`;
   });
 
+  // Build the fee method description
+  let feeMethodDesc;
+  if (result.method === 'essex_split') {
+    feeMethodDesc = `${fmtPct(result.matthewsPct)} of ${result.totalSvcFeeBps} bps via Essex`;
+  } else if (result.method === 'flat_bps') {
+    feeMethodDesc = `Flat ${result.totalSvcFeeBps} bps — no split`;
+  } else if (result.method === 'lesser_of') {
+    feeMethodDesc = `${fmtBps(result.matthewsBps)} (lesser of ${result.feeInfo.bpsOption} bps / ${fmtBps(result.feeInfo.pctOption)})`;
+  } else {
+    feeMethodDesc = `${fmtPct(result.matthewsPct)} of ${result.totalSvcFeeBps} bps svc fee`;
+  }
+
   content.innerHTML = `
+    <div class="lender-info">
+      <span class="tag ${lender.typeTag}">${lender.type}</span>
+      <strong>${lender.name}</strong> — ${result.tierLabel}
+    </div>
     <div class="results-grid">
       <div class="result-box">
         <div class="label">Loan Balance</div>
@@ -780,19 +1235,19 @@ function renderResults(data) {
         <div class="sub">${(rate*100).toFixed(2)}%, ${data.amortYears}yr amort</div>
       </div>
       <div class="result-box">
-        <div class="label">Essex Split Tier</div>
-        <div class="value" style="font-size:16px;">${fmtPct(result.matthewsPct)}</div>
-        <div class="sub">${essexLabel}</div>
+        <div class="label">Matthews Fee Rate</div>
+        <div class="value" style="font-size:16px;">${fmtBps(result.matthewsBps)}</div>
+        <div class="sub">${feeMethodDesc}</div>
       </div>
       <div class="result-box">
         <div class="label">Total Service Fee (${termYears}yr)</div>
         <div class="value" style="font-size:16px;">${fmtD(result.totalServiceFee,2)}</div>
-        <div class="sub">10 bps of declining UPB</div>
+        <div class="sub">${fmtBps(result.totalSvcFeeBps)} of declining UPB</div>
       </div>
       <div class="result-box hl-blue">
         <div class="label">Matthews Total (${termYears}yr)</div>
         <div class="value">${fmtD(result.totalMatthews,2)}</div>
-        <div class="sub">${fmtPct(result.matthewsPct)} of service fee</div>
+        <div class="sub">${fmtBps(result.matthewsBps)} effective</div>
       </div>
       <div class="result-box hl-green">
         <div class="label">Company Share (${termYears}yr)</div>
@@ -858,7 +1313,9 @@ function toggleAmort() {
 // ===========================
 function saveScenario() {
   if (!currentResults) { alert('Calculate first.'); return; }
-  const name = document.getElementById('scenarioName').value || `Loan ${fmt(currentResults.loanSize)}`;
+  const lender = LENDERS[currentResults.lenderId];
+  const defaultName = `${lender.name} — ${fmt(currentResults.loanSize)}`;
+  const name = document.getElementById('scenarioName').value || defaultName;
   scenarios.push({
     id: Date.now(), name,
     color: SCENARIO_COLORS[scenarios.length % SCENARIO_COLORS.length],
@@ -875,14 +1332,16 @@ function saveScenario() {
 // - New cohorts stack on top of prior cohorts
 // - Revenue accumulates while loans are in their term, then drops off
 // ===========================
-function buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, viewShare) {
+function buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, viewShare, lenderId, opts) {
   // viewShare: 0.5 for agent or company, 1.0 for full Matthews
+  lenderId = lenderId || 'symetra';
+  opts = opts || {};
   const numOrigYears = yearlyLoans.length;
   const totalYears = numOrigYears + termYears - 1; // years until last cohort expires
 
   // Build fee schedule for one loan
   const { schedule } = amortize(loanSize, rate, amortYears, termYears);
-  const fees = computeServiceFees(schedule, loanSize);
+  const fees = computeServiceFees(schedule, loanSize, lenderId, opts);
 
   // Annual matthews fee per loan for each year of loan life (1..termYears)
   const feePerLoanByYear = {}; // year-of-life → annual matthews fee for 1 loan
@@ -920,17 +1379,15 @@ function buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLo
     yearTotals.push({ year: cy, annual: total, cumulative });
   }
 
-  return { cohorts, yearTotals, totalYears, feePerLoanByYear, fees, viewShare };
+  return { cohorts, yearTotals, totalYears, feePerLoanByYear, fees, viewShare, lenderId };
 }
 
 // ===========================
 // AGENT PROJECTION
 // ===========================
 function runAgentProjection() {
-  const loanSize = parseCurrency(document.getElementById('agentLoanSize').value);
-  const rate = parseFloat(document.getElementById('agentRate').value) / 100;
-  const amortYears = parseInt(document.getElementById('agentAmort').value);
-  const termYears = parseInt(document.getElementById('agentTerm').value);
+  const inputs = readFormInputs('agent');
+  const { lenderId, loanSize, rate, amortYears, termYears, opts } = inputs;
 
   const yearlyLoans = [
     parseInt(document.getElementById('agentY1').value) || 0,
@@ -942,20 +1399,27 @@ function runAgentProjection() {
 
   if (!loanSize) { alert('Enter average loan size.'); return; }
 
-  const proj = buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, 0.5);
-  renderAgentProjection(proj, loanSize, termYears);
+  const proj = buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, 0.5, lenderId, opts);
+  renderAgentProjection(proj, loanSize, termYears, lenderId);
 }
 
-function renderAgentProjection(proj, loanSize, termYears) {
+function renderAgentProjection(proj, loanSize, termYears, lenderId) {
+  lenderId = lenderId || 'symetra';
+  const lender = LENDERS[lenderId];
   const panel = document.getElementById('agentResultsPanel');
   const summary = document.getElementById('agentSummary');
 
   const totalAgent = proj.yearTotals.reduce((s,y) => s + y.annual, 0);
   const peakAnnual = Math.max(...proj.yearTotals.map(y => y.annual));
   const totalLoans = proj.cohorts.reduce((s,c) => s + c.numLoans, 0);
-  const essexTier = loanSize <= 5000000 ? '10% (loan &le; $5M)' : '25% (loan > $5M)';
+  const feeInfo = proj.fees.feeInfo;
+  const tierDesc = feeInfo.tierLabel;
 
   summary.innerHTML = `
+    <div class="lender-info">
+      <span class="tag ${lender.typeTag}">${lender.type}</span>
+      <strong>${lender.name}</strong> — ${tierDesc}
+    </div>
     <div class="results-grid">
       <div class="result-box hl-purple">
         <div class="label">Your Total Agent Income</div>
@@ -973,8 +1437,8 @@ function renderAgentProjection(proj, loanSize, termYears) {
         <div class="sub">Over 5 years</div>
       </div>
       <div class="result-box">
-        <div class="label">Essex Split / Agent</div>
-        <div class="value" style="font-size:16px;">${essexTier}</div>
+        <div class="label">Matthews Fee Rate</div>
+        <div class="value" style="font-size:16px;">${fmtBps(feeInfo.matthewsBps)}</div>
         <div class="sub">Agent = 50% of Matthews share</div>
       </div>
     </div>
@@ -996,10 +1460,8 @@ function renderAgentProjection(proj, loanSize, termYears) {
 // COMPANY PROJECTION
 // ===========================
 function runCompanyProjection() {
-  const loanSize = parseCurrency(document.getElementById('compLoanSize').value);
-  const rate = parseFloat(document.getElementById('compRate').value) / 100;
-  const amortYears = parseInt(document.getElementById('compAmort').value);
-  const termYears = parseInt(document.getElementById('compTerm').value);
+  const inputs = readFormInputs('comp');
+  const { lenderId, loanSize, rate, amortYears, termYears, opts } = inputs;
 
   const yearlyLoans = [
     parseInt(document.getElementById('compY1').value) || 0,
@@ -1011,19 +1473,26 @@ function runCompanyProjection() {
 
   if (!loanSize) { alert('Enter average loan size.'); return; }
 
-  const proj = buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, 0.5);
-  renderCompanyProjection(proj, loanSize, termYears);
+  const proj = buildStackingProjection(loanSize, rate, amortYears, termYears, yearlyLoans, 0.5, lenderId, opts);
+  renderCompanyProjection(proj, loanSize, termYears, lenderId);
 }
 
-function renderCompanyProjection(proj, loanSize, termYears) {
+function renderCompanyProjection(proj, loanSize, termYears, lenderId) {
+  lenderId = lenderId || 'symetra';
+  const lender = LENDERS[lenderId];
   const panel = document.getElementById('compResultsPanel');
   const summary = document.getElementById('compSummary');
 
   const totalComp = proj.yearTotals.reduce((s,y) => s + y.annual, 0);
   const peakAnnual = Math.max(...proj.yearTotals.map(y => y.annual));
   const totalLoans = proj.cohorts.reduce((s,c) => s + c.numLoans, 0);
+  const feeInfo = proj.fees.feeInfo;
 
   summary.innerHTML = `
+    <div class="lender-info">
+      <span class="tag ${lender.typeTag}">${lender.type}</span>
+      <strong>${lender.name}</strong> — ${feeInfo.tierLabel}
+    </div>
     <div class="results-grid">
       <div class="result-box hl-blue">
         <div class="label">Total Company Income</div>
@@ -1212,15 +1681,17 @@ function renderCompareTab() {
   let cards = scenarios.map(s => {
     const d = s.data;
     const r = d.result;
+    const lender = LENDERS[d.lenderId || 'symetra'];
     return `<div class="compare-card" style="border-color:${s.color}40;">
       <div class="compare-header">
         <span class="color-dot" style="background:${s.color}"></span>
         <h3>${s.name}</h3>
       </div>
+      <div class="compare-metric"><span class="label">Lender</span><span class="val">${lender.name}</span></div>
       <div class="compare-metric"><span class="label">Loan Size</span><span class="val">${fmt(d.loanSize)}</span></div>
       <div class="compare-metric"><span class="label">Rate</span><span class="val">${(d.rate*100).toFixed(2)}%</span></div>
       <div class="compare-metric"><span class="label">Term / Amort</span><span class="val">${d.termYears}yr / ${d.amortYears}yr</span></div>
-      <div class="compare-metric"><span class="label">Essex Split</span><span class="val">${fmtPct(r.matthewsPct)} to Matthews</span></div>
+      <div class="compare-metric"><span class="label">Matthews Rate</span><span class="val">${fmtBps(r.matthewsBps)} (${fmtPct(r.matthewsPct)})</span></div>
       <div class="compare-metric"><span class="label">Total Service Fee</span><span class="val">${fmtD(r.totalServiceFee,0)}</span></div>
       <div class="compare-metric"><span class="label">Matthews Total</span><span class="val">${fmtD(r.totalMatthews,0)}</span></div>
       <div class="compare-metric"><span class="label">Company Share</span><span class="val">${fmtD(r.totalCompany,0)}</span></div>
@@ -1273,68 +1744,115 @@ function renderReference() {
   const div = document.getElementById('referenceContent');
   div.innerHTML = `
     <div class="card" style="box-shadow:none;padding:0;">
-      <h3>Servicing Fee Structure</h3>
+
+      <h3>All Lender Fee Structures</h3>
       <div class="info-box">
-        The servicing fee for Symetra (and similar insurance company lenders via Essex Financial Services)
-        is <strong>10 basis points (0.10%) of the unpaid principal balance</strong>, collected monthly.
-        This fee declines over time as the loan amortizes.
+        Matthews works with 6 lenders across 3 categories: Agency, DUS, and Insurance Company.
+        Each has a unique fee structure. Matthews' share is always split <strong>50/50 between the company and the originating agent</strong>.
       </div>
 
-      <h3 style="margin-top:20px;">Essex Financial Services Partnership</h3>
+      <!-- Symetra -->
+      <h3 style="margin-top:20px;"><span class="tag tag-insurance">Insurance</span> Symetra (via Essex Financial Services)</h3>
       <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
-        Matthews' share of the servicing fee is determined by the Essex split, based on individual loan size:
+        Base fee: <strong>10 bps (0.10%)</strong> of UPB. Matthews' share via Essex split depends on loan size and aggregate portfolio:
       </p>
       <table class="tier-table">
         <thead><tr>
-          <th style="text-align:left">Individual Loan Size</th>
+          <th style="text-align:left">Condition</th>
           <th>Essex Retains</th>
           <th>Matthews Receives</th>
-          <th>Effective Matthews Rate</th>
+          <th>Effective Rate</th>
         </tr></thead>
         <tbody>
-          <tr>
-            <td style="text-align:left">$0 — $5,000,000</td>
-            <td>90%</td>
-            <td>10%</td>
-            <td>1.0 bps</td>
-          </tr>
-          <tr>
-            <td style="text-align:left">Over $5,000,000</td>
-            <td>75%</td>
-            <td>25%</td>
-            <td>2.5 bps</td>
-          </tr>
+          <tr><td style="text-align:left">Loan &le; $5M (any UPB)</td><td>90%</td><td>10%</td><td>1.0 bps</td></tr>
+          <tr><td style="text-align:left">Loan > $5M, Agg. UPB &le; $250M</td><td>75%</td><td>25%</td><td>2.5 bps</td></tr>
+          <tr><td style="text-align:left">Loan > $5M, Agg. UPB > $250M</td><td>65%</td><td>35%</td><td>3.5 bps</td></tr>
         </tbody>
       </table>
 
-      <h3 style="margin-top:20px;">Company / Agent Split</h3>
+      <!-- Assurity -->
+      <h3 style="margin-top:20px;"><span class="tag tag-insurance">Insurance</span> Assurity</h3>
       <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
-        Matthews' share of the servicing fee is split 50/50 between the company and the originating agent.
+        Flat <strong>12.5 bps (0.125%)</strong> of outstanding balance. No Essex partnership — Matthews receives the full amount.
+      </p>
+
+      <!-- Ready Capital -->
+      <h3 style="margin-top:20px;"><span class="tag tag-agency">Agency</span> Ready Capital</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Freddie SBL program. Min volume: $15M. Fee = <strong>lesser of X bps or Y% of Freddie Mac servicing fee</strong>:
       </p>
       <table class="tier-table">
         <thead><tr>
-          <th style="text-align:left">Recipient</th>
-          <th>Share of Matthews Revenue</th>
-          <th>Effective Rate ($0-$5M loan)</th>
-          <th>Effective Rate ($5M+ loan)</th>
+          <th style="text-align:left">Annual Volume</th>
+          <th>BPS Option</th>
+          <th>% of Freddie Fee Option</th>
         </tr></thead>
         <tbody>
-          <tr>
-            <td style="text-align:left">Company</td>
-            <td>50%</td>
-            <td>0.5 bps</td>
-            <td>1.25 bps</td>
-          </tr>
-          <tr>
-            <td style="text-align:left">Agent</td>
-            <td>50%</td>
-            <td>0.5 bps</td>
-            <td>1.25 bps</td>
-          </tr>
+          <tr><td style="text-align:left">$15M – $30M</td><td>5 bps</td><td>12%</td></tr>
+          <tr><td style="text-align:left">$30M – $50M</td><td>6 bps</td><td>14%</td></tr>
+          <tr><td style="text-align:left">$50M – $100M</td><td>7 bps</td><td>16%</td></tr>
+          <tr><td style="text-align:left">$100M+</td><td>8 bps</td><td>18%</td></tr>
         </tbody>
       </table>
 
-      <h3 style="margin-top:20px;">Full Fee Waterfall Example</h3>
+      <!-- Lument -->
+      <h3 style="margin-top:20px;"><span class="tag tag-dus">DUS</span> Lument</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Percentage of servicing fee, varies by program and annual volume:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Annual Volume</th>
+          <th>Freddie SBL</th>
+          <th>Fannie SBL</th>
+          <th>Fannie Conventional</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">$0 – $50M</td><td>5%</td><td>5%</td><td>5%</td></tr>
+          <tr><td style="text-align:left">$50M – $100M</td><td>8%</td><td>8%</td><td>Lesser of 10% or 5 bps</td></tr>
+          <tr><td style="text-align:left">$100M+</td><td>10%</td><td>10%</td><td>Lesser of 10% or 5 bps</td></tr>
+        </tbody>
+      </table>
+
+      <!-- NewPoint -->
+      <h3 style="margin-top:20px;"><span class="tag tag-dus">DUS</span> NewPoint Real Estate Capital</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Programs: Freddie Mac, Fannie Mae, FHA. Min volume: $50M. Percentage of servicing fees:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Annual Volume</th>
+          <th>Matthews %</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">$50M – $100M</td><td>5%</td></tr>
+          <tr><td style="text-align:left">$100M – $200M</td><td>10%</td></tr>
+          <tr><td style="text-align:left">$200M+</td><td>15%</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Regions -->
+      <h3 style="margin-top:20px;"><span class="tag tag-dus">DUS</span> Regions</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        Programs: Freddie SBL, Fannie Mae. Percentage of servicing strip:
+      </p>
+      <table class="tier-table">
+        <thead><tr>
+          <th style="text-align:left">Condition</th>
+          <th>Matthews %</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="text-align:left">Base rate</td><td>7.5%</td></tr>
+          <tr><td style="text-align:left">> $25M qualifying loans/year</td><td>10%</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:24px;">Company / Agent Split</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">
+        For all lenders, Matthews' share of the servicing fee is split 50/50 between the company and the originating agent.
+      </p>
+
+      <h3 style="margin-top:20px;">Symetra Fee Waterfall Examples</h3>
       <div class="fee-flow" style="background:white;border:1px solid var(--border);">
         <div class="flow-box flow-lender">$5M Loan<br>10 bps = $5,000/yr</div>
         <span class="flow-arrow">&rarr;</span>
@@ -1366,6 +1884,8 @@ function renderReference() {
         <li>The stacking effect: each year's new originations add to the cumulative fee stream from prior years</li>
         <li>Peak revenue is reached when all cohort years are simultaneously active</li>
         <li>Revenue declines as older cohorts reach term maturity and drop off</li>
+        <li><strong>Insurance company lenders</strong> (Symetra, Assurity): fee based on bps of UPB</li>
+        <li><strong>Agency/DUS lenders</strong> (Ready Capital, Lument, NewPoint, Regions): fee based on % of lender's servicing fee, tiered by volume</li>
       </ul>
     </div>
   `;
@@ -1373,6 +1893,10 @@ function renderReference() {
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize lender dropdowns for all tabs
+  onLenderChange('calc');
+  onLenderChange('agent');
+  onLenderChange('comp');
   renderReference();
 });
 </script>
