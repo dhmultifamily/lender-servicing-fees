@@ -380,6 +380,42 @@
   .bucket-section .year-inputs { grid-template-columns: repeat(5, 1fr); }
   .dual-bucket-wrapper { margin-bottom: 16px; }
 
+  /* Parallel stream projection grids */
+  .stream-grids { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .stream-grid {
+    border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 14px; background: var(--white);
+  }
+  .stream-grid.stream-b1 { border-color: #54a0ff60; }
+  .stream-grid.stream-b2 { border-color: #10ac8460; }
+  .stream-grid h4 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0 0 4px 0; padding-bottom: 4px;
+  }
+  .stream-grid.stream-b1 h4 { color: var(--accent); border-bottom: 2px solid var(--accent); }
+  .stream-grid.stream-b2 h4 { color: var(--success); border-bottom: 2px solid var(--success); }
+  .stream-grid .fee-schedule {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 4px; margin: 8px 0 12px 0;
+  }
+  .stream-grid .fee-schedule .fee-item {
+    background: var(--bg); border-radius: 4px; padding: 4px 6px; text-align: center; font-size: 11px;
+  }
+  .stream-grid .fee-schedule .fee-item .fee-yr { font-weight: 700; color: var(--text-light); font-size: 10px; }
+  .stream-grid .fee-schedule .fee-item .fee-val { font-weight: 600; color: var(--primary); font-size: 12px; }
+  .stream-grid table { font-size: 12px; }
+  .stream-grid table th, .stream-grid table td { padding: 3px 6px; }
+
+  .blended-grid {
+    border: 2px solid var(--primary); border-radius: var(--radius);
+    padding: 14px; background: var(--white); margin: 16px 0;
+  }
+  .blended-grid h4 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 0 0 8px 0; padding-bottom: 4px; color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+  }
+
   @media (max-width: 768px) {
     .container { padding: 12px; }
     .form-grid { grid-template-columns: 1fr 1fr; }
@@ -389,6 +425,7 @@
     .tabs { flex-wrap: wrap; }
     .fee-flow { flex-direction: column; }
     .bucket-section .year-inputs { grid-template-columns: 1fr 1fr; }
+    .stream-grids { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -1840,22 +1877,34 @@ function renderStackedChart(canvasId, proj, title, existingChart, setChart) {
 
   let datasets;
   if (proj.isDualBucket) {
-    // Dual bucket: separate colors for each bucket's cohorts
-    datasets = proj.cohorts.filter(c => c.numLoans > 0).map((c, i) => {
-      const colors = c.bucket === 1 ? BUCKET1_COLORS : BUCKET2_COLORS;
-      const colorIdx = (c.origYear - 1) % colors.length;
-      const bucketLabel = c.bucket === 1 ? '≤$5M' : '>$5M';
-      return {
-        label: `Yr ${c.origYear} ${bucketLabel} (${c.numLoans} loans)`,
+    // Dual bucket: two independent stacks side-by-side per year
+    datasets = [];
+    // Bucket 1 cohorts → stack 'b1'
+    proj.cohorts.filter(c => c.bucket === 1 && c.numLoans > 0).forEach(c => {
+      const colorIdx = (c.origYear - 1) % BUCKET1_COLORS.length;
+      datasets.push({
+        label: `≤$5M Yr ${c.origYear} (${c.numLoans})`,
         data: proj.yearTotals.map(yt => c.yearlyRevenue[yt.year] || 0),
-        backgroundColor: colors[colorIdx] + 'CC',
-        borderColor: colors[colorIdx],
+        backgroundColor: BUCKET1_COLORS[colorIdx] + 'CC',
+        borderColor: BUCKET1_COLORS[colorIdx],
         borderWidth: 1,
-        stack: 'stack1'
-      };
+        stack: 'small'
+      });
+    });
+    // Bucket 2 cohorts → stack 'b2'
+    proj.cohorts.filter(c => c.bucket === 2 && c.numLoans > 0).forEach(c => {
+      const colorIdx = (c.origYear - 1) % BUCKET2_COLORS.length;
+      datasets.push({
+        label: `>$5M Yr ${c.origYear} (${c.numLoans})`,
+        data: proj.yearTotals.map(yt => c.yearlyRevenue[yt.year] || 0),
+        backgroundColor: BUCKET2_COLORS[colorIdx] + 'CC',
+        borderColor: BUCKET2_COLORS[colorIdx],
+        borderWidth: 1,
+        stack: 'large'
+      });
     });
   } else {
-    // Single bucket: original cohort colors
+    // Single stream: original cohort colors
     datasets = proj.cohorts.filter(c => c.numLoans > 0).map((c, i) => ({
       label: `Year ${c.origYear} Cohort (${c.numLoans} loans)`,
       data: proj.yearTotals.map(yt => c.yearlyRevenue[yt.year] || 0),
@@ -1887,7 +1936,7 @@ function renderStackedChart(canvasId, proj, title, existingChart, setChart) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: { display: true, text: title + ' — Stacking Revenue by Cohort', font: { size: 14 } },
+        title: { display: true, text: title + (proj.isDualBucket ? ' — Parallel Streams (≤$5M | >$5M)' : ' — Stacking Revenue by Cohort'), font: { size: 14 } },
         tooltip: {
           callbacks: {
             label: function(ctx) { return ctx.dataset.label + ': ' + fmtD(ctx.parsed.y, 0); }
@@ -1907,65 +1956,135 @@ function renderStackedChart(canvasId, proj, title, existingChart, setChart) {
   setChart(chart);
 }
 
+// Render a single-stream stacking grid (used for each bucket independently)
+function buildStreamGridHTML(bucketProj, totalYears, label, cssClass, loanSizeLabel, feeInfo) {
+  if (!bucketProj) return '';
+  const headers = [];
+  for (let cy = 1; cy <= totalYears; cy++) headers.push(`<th>Yr ${cy}</th>`);
+
+  // Per-loan fee schedule by year-of-life (matches spreadsheet's V column)
+  let feeScheduleItems = '';
+  const termYears = Object.keys(bucketProj.feePerLoanByYear).length;
+  for (let y = 1; y <= termYears; y++) {
+    const perLoan = bucketProj.feePerLoanByYear[y] * bucketProj.viewShare;
+    feeScheduleItems += `<div class="fee-item"><div class="fee-yr">Yr ${y}</div><div class="fee-val">${fmtD(perLoan, 2)}</div></div>`;
+  }
+
+  // Cohort rows
+  let rows = '';
+  bucketProj.cohorts.forEach(c => {
+    if (c.numLoans === 0) return;
+    let cells = '';
+    for (let cy = 1; cy <= totalYears; cy++) {
+      const val = c.yearlyRevenue[cy];
+      cells += val ? `<td class="cohort">${fmtD(val, 0)}</td>` : `<td class="empty-cell">—</td>`;
+    }
+    rows += `<tr><td style="text-align:left;font-weight:600;white-space:nowrap;">Yr ${c.origYear} (${c.numLoans})</td>${cells}</tr>`;
+  });
+
+  // Totals
+  let totalCells = '';
+  let cumCells = '';
+  let cum = 0;
+  for (let cy = 1; cy <= totalYears; cy++) {
+    const yt = bucketProj.yearTotals.find(y => y.year === cy);
+    const annual = yt ? yt.annual : 0;
+    cum += annual;
+    totalCells += `<td>${fmtD(annual, 0)}</td>`;
+    cumCells += `<td>${fmtD(cum, 0)}</td>`;
+  }
+  rows += `<tr class="total-row"><td style="text-align:left">Total</td>${totalCells}</tr>`;
+  rows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cum.</td>${cumCells}</tr>`;
+
+  const streamTotal = bucketProj.yearTotals.reduce((s, y) => s + y.annual, 0);
+  const totalLoans = bucketProj.cohorts.reduce((s, c) => s + c.numLoans, 0);
+  const splitDesc = feeInfo.method === 'essex_split'
+    ? `${(feeInfo.matthewsPct * 100).toFixed(0)}% Essex split → ${fmtBps(feeInfo.matthewsBps)}`
+    : `Flat ${fmtBps(feeInfo.matthewsBps)}`;
+
+  return `
+    <div class="stream-grid ${cssClass}">
+      <h4>${label}</h4>
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">
+        Avg loan: <strong>${loanSizeLabel}</strong> &middot; ${splitDesc} &middot; ${totalLoans} total loans &middot; Stream total: <strong>${fmt(streamTotal)}</strong>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-bottom:2px;">Per-loan annual fee (your share):</div>
+      <div class="fee-schedule">${feeScheduleItems}</div>
+      <div class="table-wrap"><table class="stack-table">
+        <thead><tr><th style="text-align:left">Cohort</th>${headers.join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>
+  `;
+}
+
 function renderStackTable(containerId, proj, viewLabel) {
   const div = document.getElementById(containerId);
-  const headers = proj.yearTotals.map(y => `<th>Year ${y.year}</th>`).join('');
-
-  let rows = '';
 
   if (proj.isDualBucket) {
-    // Dual bucket: show Bucket 1 cohorts, subtotal, then Bucket 2 cohorts, subtotal, then blended total
-    const b1Cohorts = proj.cohorts.filter(c => c.bucket === 1 && c.numLoans > 0);
-    const b2Cohorts = proj.cohorts.filter(c => c.bucket === 2 && c.numLoans > 0);
+    // === TWO INDEPENDENT PARALLEL STREAM GRIDS + BLENDED ===
+    const totalYears = proj.totalYears;
 
-    // Bucket 1 section
-    if (b1Cohorts.length > 0) {
-      rows += `<tr><td colspan="${proj.totalYears + 1}" style="text-align:left;font-weight:700;color:var(--accent);padding-top:12px;border-bottom:2px solid var(--accent);">Bucket 1: Loans ≤ $5M</td></tr>`;
-      b1Cohorts.forEach(c => {
-        let cells = '';
-        for (let cy = 1; cy <= proj.totalYears; cy++) {
-          const val = c.yearlyRevenue[cy];
-          cells += val ? `<td class="cohort">${fmtD(val, 0)}</td>` : `<td class="empty-cell">—</td>`;
-        }
-        rows += `<tr><td style="text-align:left;font-weight:600;">Year ${c.origYear} (${c.numLoans} loans)</td>${cells}</tr>`;
-      });
-      // Bucket 1 subtotal
-      let b1Cells = proj.yearTotals.map(y => {
-        const b1Annual = proj.bucket1 ? (proj.bucket1.yearTotals.find(t => t.year === y.year)?.annual || 0) : 0;
-        return `<td style="font-weight:600;color:var(--accent);">${fmtD(b1Annual, 0)}</td>`;
-      }).join('');
-      rows += `<tr style="border-top:1px solid var(--accent);"><td style="text-align:left;font-weight:600;color:var(--accent);">Subtotal ≤$5M</td>${b1Cells}</tr>`;
+    // Build each bucket's stream grid independently
+    const b1HTML = buildStreamGridHTML(
+      proj.bucket1, totalYears,
+      'Stream 1: Loans ≤ $5M', 'stream-b1',
+      fmt(proj.b1LoanSize),
+      proj.bucket1 ? proj.bucket1.fees.feeInfo : null
+    );
+    const b2HTML = buildStreamGridHTML(
+      proj.bucket2, totalYears,
+      'Stream 2: Loans > $5M', 'stream-b2',
+      fmt(proj.b2LoanSize),
+      proj.bucket2 ? proj.bucket2.fees.feeInfo : null
+    );
+
+    // Build blended combined grid
+    const headers = [];
+    for (let cy = 1; cy <= totalYears; cy++) headers.push(`<th>Yr ${cy}</th>`);
+
+    let blendedRows = '';
+    // B1 subtotal row
+    let b1Cells = '', b2Cells = '', totalCells = '', cumCells = '';
+    let cum = 0;
+    for (let cy = 1; cy <= totalYears; cy++) {
+      const yt = proj.yearTotals.find(y => y.year === cy);
+      const b1 = yt ? (yt.b1Annual || 0) : 0;
+      const b2 = yt ? (yt.b2Annual || 0) : 0;
+      const total = yt ? yt.annual : 0;
+      cum += total;
+      b1Cells += `<td style="color:var(--accent);font-weight:600;">${fmtD(b1, 0)}</td>`;
+      b2Cells += `<td style="color:var(--success);font-weight:600;">${fmtD(b2, 0)}</td>`;
+      totalCells += `<td>${fmtD(total, 0)}</td>`;
+      cumCells += `<td>${fmtD(cum, 0)}</td>`;
     }
+    blendedRows += `<tr><td style="text-align:left;font-weight:600;color:var(--accent);">≤$5M Stream</td>${b1Cells}</tr>`;
+    blendedRows += `<tr><td style="text-align:left;font-weight:600;color:var(--success);">>$5M Stream</td>${b2Cells}</tr>`;
+    blendedRows += `<tr class="total-row"><td style="text-align:left">Blended ${viewLabel} Income</td>${totalCells}</tr>`;
+    blendedRows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cumulative</td>${cumCells}</tr>`;
 
-    // Bucket 2 section
-    if (b2Cohorts.length > 0) {
-      rows += `<tr><td colspan="${proj.totalYears + 1}" style="text-align:left;font-weight:700;color:var(--success);padding-top:12px;border-bottom:2px solid var(--success);">Bucket 2: Loans > $5M</td></tr>`;
-      b2Cohorts.forEach(c => {
-        let cells = '';
-        for (let cy = 1; cy <= proj.totalYears; cy++) {
-          const val = c.yearlyRevenue[cy];
-          cells += val ? `<td class="cohort">${fmtD(val, 0)}</td>` : `<td class="empty-cell">—</td>`;
-        }
-        rows += `<tr><td style="text-align:left;font-weight:600;">Year ${c.origYear} (${c.numLoans} loans)</td>${cells}</tr>`;
-      });
-      // Bucket 2 subtotal
-      let b2Cells = proj.yearTotals.map(y => {
-        const b2Annual = proj.bucket2 ? (proj.bucket2.yearTotals.find(t => t.year === y.year)?.annual || 0) : 0;
-        return `<td style="font-weight:600;color:var(--success);">${fmtD(b2Annual, 0)}</td>`;
-      }).join('');
-      rows += `<tr style="border-top:1px solid var(--success);"><td style="text-align:left;font-weight:600;color:var(--success);">Subtotal >$5M</td>${b2Cells}</tr>`;
-    }
+    const totalBlended = proj.yearTotals.reduce((s, y) => s + y.annual, 0);
 
-    // Blended total row
-    let totalCells = proj.yearTotals.map(y => `<td>${fmtD(y.annual, 0)}</td>`).join('');
-    rows += `<tr class="total-row"><td style="text-align:left">Blended Total ${viewLabel} Income</td>${totalCells}</tr>`;
-
-    // Cumulative row
-    let cumCells = proj.yearTotals.map(y => `<td>${fmtD(y.cumulative, 0)}</td>`).join('');
-    rows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cumulative</td>${cumCells}</tr>`;
+    div.innerHTML = `
+      <h3>Parallel Stream Projection (${viewLabel}'s 50% Share)</h3>
+      <div class="note-box">Each loan size bucket runs as an independent stacking stream with its own fee split. Streams are then combined into a blended total. This matches the Projection tab layout in the spreadsheet.</div>
+      <div class="stream-grids">
+        ${b1HTML}
+        ${b2HTML}
+      </div>
+      <div class="blended-grid">
+        <h4>Combined Blended Projection — Total: ${fmt(totalBlended)}</h4>
+        <div class="table-wrap"><table class="stack-table">
+          <thead><tr><th style="text-align:left">Stream</th>${headers.join('')}</tr></thead>
+          <tbody>${blendedRows}</tbody>
+        </table></div>
+      </div>
+    `;
 
   } else {
-    // Single bucket: original layout
+    // Single stream: original layout
+    const headers = proj.yearTotals.map(y => `<th>Year ${y.year}</th>`).join('');
+    let rows = '';
     proj.cohorts.forEach(c => {
       if (c.numLoans === 0) return;
       let cells = '';
@@ -1981,20 +2100,16 @@ function renderStackTable(containerId, proj, viewLabel) {
 
     let cumCells = proj.yearTotals.map(y => `<td>${fmtD(y.cumulative, 0)}</td>`).join('');
     rows += `<tr><td style="text-align:left;font-weight:600;color:var(--text-light);">Cumulative</td>${cumCells}</tr>`;
+
+    div.innerHTML = `
+      <h3>Stacking Revenue Table (${viewLabel}'s 50% Share)</h3>
+      <div class="note-box">Each row is a year's origination cohort. Fees decline as loans amortize over their term, then drop off when the term expires. New cohorts stack on top, building cumulative servicing income.</div>
+      <div class="table-wrap"><table class="stack-table">
+        <thead><tr><th style="text-align:left">Cohort</th>${headers}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    `;
   }
-
-  const noteText = proj.isDualBucket
-    ? 'Two loan size buckets are calculated separately with their respective fee splits, then blended. Each row is a year\'s origination cohort.'
-    : 'Each row is a year\'s origination cohort. Fees decline as loans amortize over their term, then drop off when the term expires. New cohorts stack on top, building cumulative servicing income.';
-
-  div.innerHTML = `
-    <h3>Stacking Revenue Table (${viewLabel}'s 50% Share)</h3>
-    <div class="note-box">${noteText}</div>
-    <div class="table-wrap"><table class="stack-table">
-      <thead><tr><th style="text-align:left">Cohort</th>${headers}</tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-  `;
 }
 
 function renderDetailTable(containerId, proj) {
@@ -2002,29 +2117,65 @@ function renderDetailTable(containerId, proj) {
   if (!div) return;
 
   if (proj.isDualBucket) {
+    // Per-bucket economics summary
+    const b1Info = proj.bucket1 ? proj.bucket1.fees.feeInfo : null;
+    const b2Info = proj.bucket2 ? proj.bucket2.fees.feeInfo : null;
+    const b1Total = proj.bucket1 ? proj.bucket1.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const b2Total = proj.bucket2 ? proj.bucket2.yearTotals.reduce((s,y) => s + y.annual, 0) : 0;
+    const blendedTotal = b1Total + b2Total;
+
+    let economicsHTML = `
+      <div class="results-grid" style="margin:12px 0;">
+        <div class="result-box" style="border-left:3px solid var(--accent);">
+          <div class="label">≤$5M Stream</div>
+          <div class="value" style="font-size:16px;">${fmt(b1Total)}</div>
+          <div class="sub">${proj.totalB1Loans} loans &middot; ${fmt(proj.b1LoanSize)} avg &middot; ${b1Info ? fmtBps(b1Info.matthewsBps) : '—'} Matthews</div>
+        </div>
+        <div class="result-box" style="border-left:3px solid var(--success);">
+          <div class="label">>$5M Stream</div>
+          <div class="value" style="font-size:16px;">${fmt(b2Total)}</div>
+          <div class="sub">${proj.totalB2Loans} loans &middot; ${fmt(proj.b2LoanSize)} avg &middot; ${b2Info ? fmtBps(b2Info.matthewsBps) : '—'} Matthews</div>
+        </div>
+        <div class="result-box" style="border-left:3px solid var(--primary);">
+          <div class="label">≤$5M Share of Total</div>
+          <div class="value" style="font-size:16px;">${blendedTotal > 0 ? (b1Total / blendedTotal * 100).toFixed(1) : 0}%</div>
+          <div class="sub">By revenue</div>
+        </div>
+        <div class="result-box" style="border-left:3px solid var(--primary);">
+          <div class="label">>$5M Share of Total</div>
+          <div class="value" style="font-size:16px;">${blendedTotal > 0 ? (b2Total / blendedTotal * 100).toFixed(1) : 0}%</div>
+          <div class="sub">By revenue</div>
+        </div>
+      </div>
+    `;
+
+    // Year-by-year table
     let rows = proj.yearTotals.map(y => {
-      const b1Loans = proj.bucket1 ? proj.bucket1.cohorts.reduce((s,c) => s + (c.yearlyRevenue[y.year] ? c.numLoans : 0), 0) : 0;
-      const b2Loans = proj.bucket2 ? proj.bucket2.cohorts.reduce((s,c) => s + (c.yearlyRevenue[y.year] ? c.numLoans : 0), 0) : 0;
+      const b1Active = proj.bucket1 ? proj.bucket1.cohorts.reduce((s,c) => s + (c.yearlyRevenue[y.year] ? c.numLoans : 0), 0) : 0;
+      const b2Active = proj.bucket2 ? proj.bucket2.cohorts.reduce((s,c) => s + (c.yearlyRevenue[y.year] ? c.numLoans : 0), 0) : 0;
+      const b1Ann = y.b1Annual || 0;
+      const b2Ann = y.b2Annual || 0;
       return `<tr>
         <td style="text-align:left">Year ${y.year}</td>
-        <td>${b1Loans}</td>
-        <td>${fmtD(y.b1Annual || 0, 2)}</td>
-        <td>${b2Loans}</td>
-        <td>${fmtD(y.b2Annual || 0, 2)}</td>
-        <td>${fmtD(y.annual, 2)}</td>
-        <td>${fmtD(y.cumulative, 2)}</td>
+        <td>${b1Active}</td>
+        <td style="color:var(--accent);font-weight:600;">${fmtD(b1Ann, 0)}</td>
+        <td>${b2Active}</td>
+        <td style="color:var(--success);font-weight:600;">${fmtD(b2Ann, 0)}</td>
+        <td style="font-weight:700;">${fmtD(y.annual, 0)}</td>
+        <td>${fmtD(y.cumulative, 0)}</td>
       </tr>`;
     }).join('');
 
-    div.innerHTML = `<h3>Year-by-Year Summary</h3>
+    div.innerHTML = `<h3>Year-by-Year Blended Summary</h3>
+      ${economicsHTML}
       <div class="table-wrap"><table>
         <thead><tr>
           <th style="text-align:left">Year</th>
-          <th>&le;$5M Loans</th>
-          <th>&le;$5M Income</th>
-          <th>>$5M Loans</th>
-          <th>>$5M Income</th>
-          <th>Blended Annual</th>
+          <th style="color:var(--accent);">≤$5M Active</th>
+          <th style="color:var(--accent);">≤$5M Income</th>
+          <th style="color:var(--success);">>$5M Active</th>
+          <th style="color:var(--success);">>$5M Income</th>
+          <th>Blended</th>
           <th>Cumulative</th>
         </tr></thead>
         <tbody>${rows}</tbody>
